@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
 
@@ -63,6 +64,16 @@
             >
                 <span class="nav-icon">💳</span>
                 <span class="nav-text">Credit</span>
+            </button>
+
+
+            <button
+                class="nav-item"
+                data-page="loans"
+                onclick="showPage('loans', this)"
+            >
+                <span class="nav-icon">◫</span>
+                <span class="nav-text">Finance</span>
             </button>
 
 
@@ -137,10 +148,7 @@
         </header>
 
 
-        <!-- ========================= -->
-        <!-- DASHBOARD PAGE -->
-        <!-- ========================= -->
-
+        <!-- DASHBOARD -->
         <section
             id="page-dashboard"
             class="page active-page"
@@ -160,7 +168,7 @@
                     </h2>
 
                     <span class="hero-subtitle">
-                        Cash minus credit card balances
+                        Cash minus credit and financing liabilities
                     </span>
 
                 </div>
@@ -193,6 +201,18 @@
 
 
                     <div>
+                        <span>Finance Owed</span>
+
+                        <strong
+                            class="money"
+                            id="totalLoanOutstanding"
+                        >
+                            BHD 0.000
+                        </strong>
+                    </div>
+
+
+                    <div>
                         <span>Savings</span>
 
                         <strong
@@ -208,18 +228,15 @@
             </section>
 
 
+            <!-- ACCOUNTS -->
             <section class="section">
 
                 <div class="section-header">
 
                     <div>
-                        <p class="section-label">
-                            ACCOUNTS
-                        </p>
-
+                        <p class="section-label">ACCOUNTS</p>
                         <h2>My Banks</h2>
                     </div>
-
 
                     <button
                         class="text-button"
@@ -230,7 +247,6 @@
 
                 </div>
 
-
                 <div
                     id="dashboardAccountsGrid"
                     class="accounts-grid"
@@ -239,18 +255,15 @@
             </section>
 
 
+            <!-- CREDIT -->
             <section class="section">
 
                 <div class="section-header">
 
                     <div>
-                        <p class="section-label">
-                            CREDIT
-                        </p>
-
+                        <p class="section-label">CREDIT</p>
                         <h2>Credit Cards</h2>
                     </div>
-
 
                     <button
                         class="text-button"
@@ -261,7 +274,6 @@
 
                 </div>
 
-
                 <div
                     id="dashboardCreditGrid"
                     class="credit-grid"
@@ -270,18 +282,45 @@
             </section>
 
 
+            <!-- ISLAMIC FINANCE -->
             <section class="section">
 
                 <div class="section-header">
 
                     <div>
                         <p class="section-label">
-                            SAVINGS
+                            ISLAMIC FINANCING
                         </p>
 
-                        <h2>Savings Progress</h2>
+                        <h2>KFH Finance</h2>
                     </div>
 
+                    <button
+                        class="text-button"
+                        onclick="goToPage('loans')"
+                    >
+                        View details →
+                    </button>
+
+                </div>
+
+                <div
+                    id="dashboardLoansGrid"
+                    class="loan-grid"
+                ></div>
+
+            </section>
+
+
+            <!-- SAVINGS -->
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <p class="section-label">SAVINGS</p>
+                        <h2>Savings Progress</h2>
+                    </div>
 
                     <button
                         class="primary-button"
@@ -310,6 +349,7 @@
 
 
                         <div class="goal-right">
+
                             <span>Goal</span>
 
                             <strong
@@ -318,6 +358,7 @@
                             >
                                 BHD 5,000.000
                             </strong>
+
                         </div>
 
                     </div>
@@ -355,10 +396,7 @@
         </section>
 
 
-        <!-- ========================= -->
         <!-- ACCOUNTS PAGE -->
-        <!-- ========================= -->
-
         <section
             id="page-accounts"
             class="page"
@@ -393,7 +431,7 @@
 
                 <div class="summary-card">
 
-                    <span>Recently Updated</span>
+                    <span>Updated Accounts</span>
 
                     <strong id="recentlyUpdated">
                         0 / 5
@@ -409,15 +447,11 @@
                 <div class="section-header">
 
                     <div>
-                        <p class="section-label">
-                            ACCOUNTS
-                        </p>
-
+                        <p class="section-label">ACCOUNTS</p>
                         <h2>All Bank Accounts</h2>
                     </div>
 
                 </div>
-
 
                 <div
                     id="accountsGrid"
@@ -429,10 +463,7 @@
         </section>
 
 
-        <!-- ========================= -->
         <!-- CREDIT PAGE -->
-        <!-- ========================= -->
-
         <section
             id="page-credit"
             class="page"
@@ -486,15 +517,11 @@
                 <div class="section-header">
 
                     <div>
-                        <p class="section-label">
-                            CREDIT CARDS
-                        </p>
-
+                        <p class="section-label">CREDIT CARDS</p>
                         <h2>Your Cards</h2>
                     </div>
 
                 </div>
-
 
                 <div
                     id="creditCardsGrid"
@@ -506,10 +533,110 @@
         </section>
 
 
-        <!-- ========================= -->
-        <!-- SAVINGS PAGE -->
-        <!-- ========================= -->
+        <!-- LOANS / FINANCE PAGE -->
+        <section
+            id="page-loans"
+            class="page"
+        >
 
+            <section class="summary-grid">
+
+                <div class="summary-card">
+
+                    <span>Finance Outstanding</span>
+
+                    <strong
+                        class="money"
+                        id="loanPageOutstanding"
+                    >
+                        BHD 0.000
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <span>Monthly Installments</span>
+
+                    <strong
+                        class="money"
+                        id="loanPageMonthly"
+                    >
+                        BHD 0.000
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <span>Finance Repaid</span>
+
+                    <strong
+                        id="loanPageProgress"
+                    >
+                        0%
+                    </strong>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <p class="section-label">
+                            ISLAMIC FINANCING
+                        </p>
+
+                        <h2>My Financing</h2>
+                    </div>
+
+                </div>
+
+                <div
+                    id="loansGrid"
+                    class="loan-grid"
+                ></div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="info-card">
+
+                    <div class="info-icon">
+                        i
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            About the outstanding balance
+                        </h3>
+
+                        <p>
+                            For Islamic financing, use the latest
+                            outstanding or settlement amount shown
+                            by KFH rather than estimating it using a
+                            conventional interest formula.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- SAVINGS PAGE -->
         <section
             id="page-savings"
             class="page"
@@ -555,9 +682,7 @@
 
                         <div>
 
-                            <span>
-                                Current Savings
-                            </span>
+                            <span>Current Savings</span>
 
                             <h2
                                 class="money"
@@ -571,9 +696,7 @@
 
                         <div class="goal">
 
-                            <span>
-                                Goal
-                            </span>
+                            <span>Goal</span>
 
                             <strong
                                 class="money"
@@ -616,75 +739,10 @@
 
             </section>
 
-
-            <section class="section">
-
-                <div class="section-header">
-
-                    <div>
-                        <p class="section-label">
-                            GOAL BREAKDOWN
-                        </p>
-
-                        <h2>Progress</h2>
-                    </div>
-
-                </div>
-
-
-                <div class="summary-grid">
-
-                    <div class="summary-card">
-
-                        <span>Current</span>
-
-                        <strong
-                            class="money"
-                            id="savingSummaryCurrent"
-                        >
-                            BHD 0.000
-                        </strong>
-
-                    </div>
-
-
-                    <div class="summary-card">
-
-                        <span>Remaining</span>
-
-                        <strong
-                            class="money"
-                            id="savingSummaryRemaining"
-                        >
-                            BHD 0.000
-                        </strong>
-
-                    </div>
-
-
-                    <div class="summary-card">
-
-                        <span>Completion</span>
-
-                        <strong
-                            id="savingSummaryPercent"
-                        >
-                            0%
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </section>
-
         </section>
 
 
-        <!-- ========================= -->
         <!-- ANALYTICS PAGE -->
-        <!-- ========================= -->
-
         <section
             id="page-analytics"
             class="page"
@@ -704,7 +762,7 @@
                     </strong>
 
                     <small>
-                        Across all bank accounts
+                        Across bank accounts
                     </small>
 
                 </div>
@@ -722,7 +780,25 @@
                     </strong>
 
                     <small>
-                        Across both credit cards
+                        Credit-card liabilities
+                    </small>
+
+                </div>
+
+
+                <div class="analytics-card">
+
+                    <span>Finance Outstanding</span>
+
+                    <strong
+                        class="money"
+                        id="analyticsLoans"
+                    >
+                        BHD 0.000
+                    </strong>
+
+                    <small>
+                        Islamic financing liability
                     </small>
 
                 </div>
@@ -740,7 +816,7 @@
                     </strong>
 
                     <small>
-                        Cash minus credit used
+                        Cash minus liabilities
                     </small>
 
                 </div>
@@ -758,7 +834,7 @@
                     </strong>
 
                     <small>
-                        Manually tracked amount
+                        Tracked savings
                     </small>
 
                 </div>
@@ -783,7 +859,6 @@
                         </div>
 
                     </div>
-
 
                     <div id="bankDistribution"></div>
 
@@ -810,8 +885,32 @@
 
                     </div>
 
-
                     <div id="creditAnalytics"></div>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="analytics-panel">
+
+                    <div class="section-header">
+
+                        <div>
+
+                            <p class="section-label">
+                                LIABILITIES
+                            </p>
+
+                            <h2>Debt Breakdown</h2>
+
+                        </div>
+
+                    </div>
+
+                    <div id="liabilityAnalytics"></div>
 
                 </div>
 
@@ -824,10 +923,7 @@
 </div>
 
 
-<!-- ========================= -->
 <!-- BALANCE MODAL -->
-<!-- ========================= -->
-
 <div
     class="modal"
     id="balanceModal"
@@ -842,21 +938,15 @@
             ×
         </button>
 
-
         <p class="section-label">
             UPDATE ACCOUNT
         </p>
-
 
         <h2 id="modalBankName">
             Bank
         </h2>
 
-
-        <label>
-            Current Balance
-        </label>
-
+        <label>Current Balance</label>
 
         <div class="input-wrapper">
 
@@ -872,7 +962,6 @@
 
         </div>
 
-
         <button
             class="primary-button full"
             onclick="saveBalance()"
@@ -885,10 +974,7 @@
 </div>
 
 
-<!-- ========================= -->
 <!-- CREDIT MODAL -->
-<!-- ========================= -->
-
 <div
     class="modal"
     id="creditModal"
@@ -903,20 +989,15 @@
             ×
         </button>
 
-
         <p class="section-label">
             UPDATE CREDIT CARD
         </p>
-
 
         <h2 id="creditModalName">
             Credit Card
         </h2>
 
-
-        <label>
-            Amount Used
-        </label>
+        <label>Amount Used</label>
 
         <div class="input-wrapper">
 
@@ -927,15 +1008,12 @@
                 id="creditUsedInput"
                 step="0.001"
                 inputmode="decimal"
-                placeholder="0.000"
             >
 
         </div>
 
 
-        <label>
-            Credit Limit
-        </label>
+        <label>Credit Limit</label>
 
         <div class="input-wrapper">
 
@@ -946,15 +1024,12 @@
                 id="creditLimitInput"
                 step="0.001"
                 inputmode="decimal"
-                placeholder="0.000"
             >
 
         </div>
 
 
-        <label>
-            Payment Due Date
-        </label>
+        <label>Payment Due Date</label>
 
         <input
             class="date-input"
@@ -975,10 +1050,201 @@
 </div>
 
 
-<!-- ========================= -->
-<!-- SAVINGS MODAL -->
-<!-- ========================= -->
+<!-- FINANCING MODAL -->
+<div
+    class="modal"
+    id="loanModal"
+>
 
+    <div class="modal-content loan-modal-content">
+
+        <button
+            class="close"
+            onclick="closeLoanModal()"
+        >
+            ×
+        </button>
+
+        <p class="section-label">
+            ISLAMIC FINANCING
+        </p>
+
+        <h2 id="loanModalName">
+            KFH Personal Finance
+        </h2>
+
+
+        <label>
+            Original Finance Amount
+        </label>
+
+        <div class="input-wrapper">
+
+            <span>BHD</span>
+
+            <input
+                type="number"
+                id="loanOriginalInput"
+                step="0.001"
+                inputmode="decimal"
+            >
+
+        </div>
+
+
+        <label>
+            Contracted Total Repayment
+        </label>
+
+        <div class="input-wrapper">
+
+            <span>BHD</span>
+
+            <input
+                type="number"
+                id="loanContractTotalInput"
+                step="0.001"
+                inputmode="decimal"
+            >
+
+        </div>
+
+        <p class="field-help">
+            The contractual total payable over the full financing term.
+        </p>
+
+
+        <label>
+            Current Outstanding / Settlement Balance
+        </label>
+
+        <div class="input-wrapper">
+
+            <span>BHD</span>
+
+            <input
+                type="number"
+                id="loanOutstandingInput"
+                step="0.001"
+                inputmode="decimal"
+            >
+
+        </div>
+
+        <p class="field-help">
+            Use the latest figure provided by KFH when possible.
+        </p>
+
+
+        <label>
+            Monthly Installment
+        </label>
+
+        <div class="input-wrapper">
+
+            <span>BHD</span>
+
+            <input
+                type="number"
+                id="loanMonthlyInput"
+                step="0.001"
+                inputmode="decimal"
+            >
+
+        </div>
+
+
+        <label>
+            Profit Rate %
+        </label>
+
+        <div class="input-wrapper">
+
+            <span>%</span>
+
+            <input
+                type="number"
+                id="loanProfitRateInput"
+                step="0.01"
+                inputmode="decimal"
+            >
+
+        </div>
+
+
+        <div class="two-column-inputs">
+
+            <div>
+
+                <label>
+                    Total Installments
+                </label>
+
+                <input
+                    class="standard-input"
+                    type="number"
+                    id="loanTotalInstallmentsInput"
+                    min="0"
+                    inputmode="numeric"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>
+                    Installments Paid
+                </label>
+
+                <input
+                    class="standard-input"
+                    type="number"
+                    id="loanPaidInstallmentsInput"
+                    min="0"
+                    inputmode="numeric"
+                >
+
+            </div>
+
+        </div>
+
+
+        <label>
+            Next Payment Date
+        </label>
+
+        <input
+            class="date-input"
+            type="date"
+            id="loanNextPaymentInput"
+        >
+
+
+        <label>
+            Finance End Date
+        </label>
+
+        <input
+            class="date-input"
+            type="date"
+            id="loanEndDateInput"
+        >
+
+
+        <button
+            class="primary-button full"
+            onclick="saveLoan()"
+        >
+            Save Financing
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- SAVINGS MODAL -->
 <div
     class="modal"
     id="savingsModal"
@@ -993,13 +1259,13 @@
             ×
         </button>
 
-
         <p class="section-label">
             SAVINGS
         </p>
 
-
-        <h2>Update Savings</h2>
+        <h2>
+            Update Savings
+        </h2>
 
 
         <label>
@@ -1015,7 +1281,6 @@
                 id="savingsInput"
                 step="0.001"
                 inputmode="decimal"
-                placeholder="0.000"
             >
 
         </div>
@@ -1034,7 +1299,6 @@
                 id="goalInput"
                 step="0.001"
                 inputmode="decimal"
-                placeholder="0.000"
             >
 
         </div>

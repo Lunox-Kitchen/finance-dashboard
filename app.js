@@ -69,9 +69,47 @@ const defaultData = {
     ],
 
 
+    loans: [
+
+        {
+            id: "kfhFinance",
+
+            bank: "KFH",
+
+            name: "KFH Personal Finance",
+
+            type: "Islamic Financing",
+
+            originalAmount: 0,
+
+            contractedTotal: 0,
+
+            outstanding: 0,
+
+            monthlyInstallment: 0,
+
+            profitRate: 0,
+
+            totalInstallments: 0,
+
+            paidInstallments: 0,
+
+            nextPaymentDate: "",
+
+            endDate: "",
+
+            updated: null
+        }
+
+    ],
+
+
     savings: {
+
         current: 0,
+
         goal: 5000
+
     }
 
 };
@@ -83,14 +121,13 @@ let activeAccount = null;
 
 let activeCreditCard = null;
 
+let activeLoan = null;
+
 let balancesHidden = false;
 
 
 
-/* ================================= */
 /* DATA */
-/* ================================= */
-
 
 function cloneDefaultData() {
 
@@ -124,108 +161,13 @@ function loadData() {
                 const oldData =
                     JSON.parse(oldSaved);
 
-
                 const migrated =
-                    cloneDefaultData();
-
-
-                if (
-                    Array.isArray(
-                        oldData.accounts
-                    )
-                ) {
-
-                    migrated.accounts.forEach(
-                        account => {
-
-                            const oldAccount =
-                                oldData.accounts.find(
-                                    item =>
-                                        item.id ===
-                                        account.id
-                                );
-
-
-                            if (oldAccount) {
-
-                                account.balance =
-                                    Number(
-                                        oldAccount.balance
-                                    ) || 0;
-
-
-                                account.updated =
-                                    oldAccount.updated ||
-                                    null;
-
-                            }
-
-                        }
-                    );
-
-                }
-
-
-                if (
-                    Array.isArray(
-                        oldData.creditCards
-                    )
-                ) {
-
-                    migrated.creditCards.forEach(
-                        card => {
-
-                            const oldCard =
-                                oldData.creditCards.find(
-                                    item =>
-                                        item.id ===
-                                        card.id
-                                );
-
-
-                            if (oldCard) {
-
-                                card.used =
-                                    Number(
-                                        oldCard.used
-                                    ) || 0;
-
-
-                                card.limit =
-                                    Number(
-                                        oldCard.limit
-                                    ) ||
-                                    card.limit;
-
-                            }
-
-                        }
-                    );
-
-                }
-
-
-                if (oldData.savings) {
-
-                    migrated.savings.current =
-                        Number(
-                            oldData.savings.current
-                        ) || 0;
-
-
-                    migrated.savings.goal =
-                        Number(
-                            oldData.savings.goal
-                        ) || 5000;
-
-                }
+                    normalizeData(oldData);
 
 
                 localStorage.setItem(
                     STORAGE_KEY,
-                    JSON.stringify(
-                        migrated
-                    )
+                    JSON.stringify(migrated)
                 );
 
 
@@ -239,18 +181,16 @@ function loadData() {
         }
 
 
-        const parsed =
-            JSON.parse(saved);
-
-
-        return normalizeData(parsed);
+        return normalizeData(
+            JSON.parse(saved)
+        );
 
     }
 
     catch (error) {
 
         console.error(
-            "Unable to load dashboard data:",
+            "Unable to load finance data:",
             error
         );
 
@@ -270,9 +210,7 @@ function normalizeData(data) {
 
     if (
         data &&
-        Array.isArray(
-            data.accounts
-        )
+        Array.isArray(data.accounts)
     ) {
 
         normalized.accounts.forEach(
@@ -281,8 +219,7 @@ function normalizeData(data) {
                 const existing =
                     data.accounts.find(
                         item =>
-                            item.id ===
-                            account.id
+                            item.id === account.id
                     );
 
 
@@ -308,9 +245,7 @@ function normalizeData(data) {
 
     if (
         data &&
-        Array.isArray(
-            data.creditCards
-        )
+        Array.isArray(data.creditCards)
     ) {
 
         normalized.creditCards.forEach(
@@ -319,8 +254,7 @@ function normalizeData(data) {
                 const existing =
                     data.creditCards.find(
                         item =>
-                            item.id ===
-                            card.id
+                            item.id === card.id
                     );
 
 
@@ -341,6 +275,87 @@ function normalizeData(data) {
                     card.dueDate =
                         existing.dueDate ||
                         "";
+
+                }
+
+            }
+        );
+
+    }
+
+
+    if (
+        data &&
+        Array.isArray(data.loans)
+    ) {
+
+        normalized.loans.forEach(
+            loan => {
+
+                const existing =
+                    data.loans.find(
+                        item =>
+                            item.id === loan.id
+                    );
+
+
+                if (existing) {
+
+                    loan.originalAmount =
+                        Number(
+                            existing.originalAmount
+                        ) || 0;
+
+
+                    loan.contractedTotal =
+                        Number(
+                            existing.contractedTotal
+                        ) || 0;
+
+
+                    loan.outstanding =
+                        Number(
+                            existing.outstanding
+                        ) || 0;
+
+
+                    loan.monthlyInstallment =
+                        Number(
+                            existing.monthlyInstallment
+                        ) || 0;
+
+
+                    loan.profitRate =
+                        Number(
+                            existing.profitRate
+                        ) || 0;
+
+
+                    loan.totalInstallments =
+                        Number(
+                            existing.totalInstallments
+                        ) || 0;
+
+
+                    loan.paidInstallments =
+                        Number(
+                            existing.paidInstallments
+                        ) || 0;
+
+
+                    loan.nextPaymentDate =
+                        existing.nextPaymentDate ||
+                        "";
+
+
+                    loan.endDate =
+                        existing.endDate ||
+                        "";
+
+
+                    loan.updated =
+                        existing.updated ||
+                        null;
 
                 }
 
@@ -385,10 +400,7 @@ function saveData() {
 
 
 
-/* ================================= */
-/* FORMATTING */
-/* ================================= */
-
+/* FORMAT */
 
 function money(value) {
 
@@ -434,7 +446,7 @@ function getTodayFormatted() {
 }
 
 
-function formatDueDate(dateString) {
+function formatDate(dateString) {
 
     if (!dateString) {
 
@@ -460,24 +472,20 @@ function formatDueDate(dateString) {
     }
 
 
-    return date
-        .toLocaleDateString(
-            "en-GB",
-            {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
-            }
-        );
+    return date.toLocaleDateString(
+        "en-GB",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
 
 }
 
 
 
-/* ================================= */
 /* TOTALS */
-/* ================================= */
-
 
 function getTotals() {
 
@@ -486,9 +494,8 @@ function getTotals() {
             (sum, account) =>
                 sum +
                 (
-                    Number(
-                        account.balance
-                    ) || 0
+                    Number(account.balance) ||
+                    0
                 ),
             0
         );
@@ -499,9 +506,8 @@ function getTotals() {
             (sum, card) =>
                 sum +
                 (
-                    Number(
-                        card.used
-                    ) || 0
+                    Number(card.used) ||
+                    0
                 ),
             0
         );
@@ -512,8 +518,32 @@ function getTotals() {
             (sum, card) =>
                 sum +
                 (
+                    Number(card.limit) ||
+                    0
+                ),
+            0
+        );
+
+
+    const totalLoanOutstanding =
+        financeData.loans.reduce(
+            (sum, loan) =>
+                sum +
+                (
+                    Number(loan.outstanding) ||
+                    0
+                ),
+            0
+        );
+
+
+    const totalMonthlyFinance =
+        financeData.loans.reduce(
+            (sum, loan) =>
+                sum +
+                (
                     Number(
-                        card.limit
+                        loan.monthlyInstallment
                     ) || 0
                 ),
             0
@@ -522,26 +552,35 @@ function getTotals() {
 
     const netWorth =
         totalCash -
-        totalCreditUsed;
+        totalCreditUsed -
+        totalLoanOutstanding;
 
 
     const utilization =
         totalCreditLimit > 0
-            ?
-            (
+
+            ? (
                 totalCreditUsed /
                 totalCreditLimit
             ) * 100
-            :
-            0;
+
+            : 0;
 
 
     return {
 
         totalCash,
+
         totalCreditUsed,
+
         totalCreditLimit,
+
+        totalLoanOutstanding,
+
+        totalMonthlyFinance,
+
         netWorth,
+
         utilization
 
     };
@@ -550,10 +589,7 @@ function getTotals() {
 
 
 
-/* ================================= */
 /* NAVIGATION */
-/* ================================= */
-
 
 const pageTitles = {
 
@@ -565,6 +601,9 @@ const pageTitles = {
 
     credit:
         "Credit Cards",
+
+    loans:
+        "Islamic Financing",
 
     savings:
         "Savings",
@@ -656,19 +695,12 @@ function goToPage(pageName) {
 
 
 
-/* ================================= */
-/* ACCOUNT CARDS */
-/* ================================= */
+/* ACCOUNTS */
 
-
-function createAccountCard(
-    account
-) {
+function createAccountCard(account) {
 
     const card =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     card.className =
@@ -677,10 +709,10 @@ function createAccountCard(
 
     const updatedText =
         account.updated
-            ?
-            `Updated ${account.updated}`
-            :
-            "Not updated yet";
+
+            ? `Updated ${account.updated}`
+
+            : "Not updated yet";
 
 
     card.innerHTML = `
@@ -758,16 +790,12 @@ function renderAccounts() {
         account => {
 
             mainGrid.appendChild(
-                createAccountCard(
-                    account
-                )
+                createAccountCard(account)
             );
 
 
             dashboardGrid.appendChild(
-                createAccountCard(
-                    account
-                )
+                createAccountCard(account)
             );
 
         }
@@ -777,27 +805,22 @@ function renderAccounts() {
 
 
 
-/* ================================= */
-/* CREDIT CARDS */
-/* ================================= */
+/* CREDIT */
 
-
-function createCreditCard(
-    card
-) {
+function createCreditCard(card) {
 
     const percentage =
         card.limit > 0
-            ?
-            Math.min(
+
+            ? Math.min(
                 (
                     card.used /
                     card.limit
                 ) * 100,
                 100
             )
-            :
-            0;
+
+            : 0;
 
 
     const available =
@@ -809,9 +832,7 @@ function createCreditCard(
 
 
     const element =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     element.className =
@@ -840,9 +861,7 @@ function createCreditCard(
 
         <div class="credit-values">
 
-            <span>
-                Used
-            </span>
+            <span>Used</span>
 
             <strong class="money">
 
@@ -871,10 +890,8 @@ function createCreditCard(
         <div class="credit-extra">
 
             <span>
-
                 ${percentage.toFixed(1)}%
                 utilization
-
             </span>
 
             <span class="money">
@@ -893,7 +910,7 @@ function createCreditCard(
 
             <span>
                 Due:
-                ${formatDueDate(
+                ${formatDate(
                     card.dueDate
                 )}
             </span>
@@ -944,16 +961,12 @@ function renderCreditCards() {
         card => {
 
             mainGrid.appendChild(
-                createCreditCard(
-                    card
-                )
+                createCreditCard(card)
             );
 
 
             dashboardGrid.appendChild(
-                createCreditCard(
-                    card
-                )
+                createCreditCard(card)
             );
 
         }
@@ -963,10 +976,379 @@ function renderCreditCards() {
 
 
 
-/* ================================= */
-/* SAVINGS */
-/* ================================= */
+/* LOANS / ISLAMIC FINANCING */
 
+function getLoanProgress(loan) {
+
+    if (
+        loan.totalInstallments > 0
+    ) {
+
+        return Math.min(
+            (
+                loan.paidInstallments /
+                loan.totalInstallments
+            ) * 100,
+            100
+        );
+
+    }
+
+
+    if (
+        loan.contractedTotal > 0
+    ) {
+
+        return Math.min(
+            Math.max(
+                (
+                    (
+                        loan.contractedTotal -
+                        loan.outstanding
+                    ) /
+                    loan.contractedTotal
+                ) * 100,
+                0
+            ),
+            100
+        );
+
+    }
+
+
+    return 0;
+
+}
+
+
+function createLoanCard(loan) {
+
+    const progress =
+        getLoanProgress(loan);
+
+
+    const remainingInstallments =
+        Math.max(
+            loan.totalInstallments -
+            loan.paidInstallments,
+            0
+        );
+
+
+    const element =
+        document.createElement("div");
+
+
+    element.className =
+        "loan-card";
+
+
+    element.innerHTML = `
+
+        <div class="loan-top">
+
+            <div class="loan-bank">
+
+                <div class="bank-icon">
+                    K
+                </div>
+
+                <div>
+
+                    <div class="loan-title">
+                        ${loan.name}
+                    </div>
+
+                    <div class="loan-type">
+                        ${loan.type}
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <span class="loan-badge">
+                Sharia-compliant
+            </span>
+
+        </div>
+
+
+        <div class="loan-outstanding">
+
+            <span>
+                Current Outstanding
+            </span>
+
+            <strong class="money">
+
+                ${displayMoney(
+                    loan.outstanding
+                )}
+
+            </strong>
+
+        </div>
+
+
+        <div class="progress-track large-progress">
+
+            <div
+                class="progress"
+                style="
+                    width:
+                    ${progress}%
+                "
+            ></div>
+
+        </div>
+
+
+        <div class="credit-extra">
+
+            <span>
+                ${progress.toFixed(1)}%
+                completed
+            </span>
+
+            <span>
+                ${remainingInstallments}
+                installments remaining
+            </span>
+
+        </div>
+
+
+        <div class="loan-stats">
+
+            <div class="loan-stat">
+
+                <span>
+                    Finance Amount
+                </span>
+
+                <strong class="money">
+
+                    ${displayMoney(
+                        loan.originalAmount
+                    )}
+
+                </strong>
+
+            </div>
+
+
+            <div class="loan-stat">
+
+                <span>
+                    Contract Total
+                </span>
+
+                <strong class="money">
+
+                    ${displayMoney(
+                        loan.contractedTotal
+                    )}
+
+                </strong>
+
+            </div>
+
+
+            <div class="loan-stat">
+
+                <span>
+                    Monthly
+                </span>
+
+                <strong class="money">
+
+                    ${displayMoney(
+                        loan.monthlyInstallment
+                    )}
+
+                </strong>
+
+            </div>
+
+
+            <div class="loan-stat">
+
+                <span>
+                    Profit Rate
+                </span>
+
+                <strong>
+
+                    ${loan.profitRate.toFixed(2)}%
+
+                </strong>
+
+            </div>
+
+
+            <div class="loan-stat">
+
+                <span>
+                    Paid
+                </span>
+
+                <strong>
+
+                    ${loan.paidInstallments}
+                    /
+                    ${loan.totalInstallments}
+
+                </strong>
+
+            </div>
+
+
+            <div class="loan-stat">
+
+                <span>
+                    Next Payment
+                </span>
+
+                <strong>
+
+                    ${formatDate(
+                        loan.nextPaymentDate
+                    )}
+
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="loan-dates">
+
+            <span>
+                End:
+                ${formatDate(
+                    loan.endDate
+                )}
+            </span>
+
+            <span>
+                ${
+                    loan.updated
+                        ? `Updated ${loan.updated}`
+                        : "Not updated"
+                }
+            </span>
+
+        </div>
+
+
+        <button
+            class="update-button"
+            onclick="
+                openLoanModal(
+                    '${loan.id}'
+                )
+            "
+        >
+
+            Update financing →
+
+        </button>
+
+    `;
+
+
+    return element;
+
+}
+
+
+function renderLoans() {
+
+    const mainGrid =
+        document.getElementById(
+            "loansGrid"
+        );
+
+
+    const dashboardGrid =
+        document.getElementById(
+            "dashboardLoansGrid"
+        );
+
+
+    mainGrid.innerHTML = "";
+
+    dashboardGrid.innerHTML = "";
+
+
+    financeData.loans.forEach(
+        loan => {
+
+            mainGrid.appendChild(
+                createLoanCard(loan)
+            );
+
+
+            dashboardGrid.appendChild(
+                createLoanCard(loan)
+            );
+
+        }
+    );
+
+
+    const totals =
+        getTotals();
+
+
+    document.getElementById(
+        "loanPageOutstanding"
+    ).textContent =
+        displayMoney(
+            totals.totalLoanOutstanding
+        );
+
+
+    document.getElementById(
+        "loanPageMonthly"
+    ).textContent =
+        displayMoney(
+            totals.totalMonthlyFinance
+        );
+
+
+    let overallProgress = 0;
+
+
+    if (
+        financeData.loans.length > 0
+    ) {
+
+        overallProgress =
+            financeData.loans.reduce(
+                (sum, loan) =>
+                    sum +
+                    getLoanProgress(loan),
+                0
+            ) /
+            financeData.loans.length;
+
+    }
+
+
+    document.getElementById(
+        "loanPageProgress"
+    ).textContent =
+        `${overallProgress.toFixed(1)}%`;
+
+}
+
+
+
+/* SAVINGS */
 
 function renderSavings() {
 
@@ -984,22 +1366,21 @@ function renderSavings() {
 
     const percent =
         goal > 0
-            ?
-            Math.min(
+
+            ? Math.min(
                 (
                     current /
                     goal
                 ) * 100,
                 100
             )
-            :
-            0;
+
+            : 0;
 
 
     const remaining =
         Math.max(
-            goal -
-            current,
+            goal - current,
             0
         );
 
@@ -1014,10 +1395,10 @@ function renderSavings() {
 
     const remainingDisplay =
         balancesHidden
-            ?
-            "BHD ••••• remaining"
-            :
-            `BHD ${money(
+
+            ? "BHD ••••• remaining"
+
+            : `BHD ${money(
                 remaining
             )} remaining`;
 
@@ -1087,38 +1468,11 @@ function renderSavings() {
     ).textContent =
         remainingDisplay;
 
-
-    document.getElementById(
-        "savingSummaryCurrent"
-    ).textContent =
-        currentDisplay;
-
-
-    document.getElementById(
-        "savingSummaryRemaining"
-    ).textContent =
-        balancesHidden
-            ?
-            "BHD •••••"
-            :
-            `BHD ${money(
-                remaining
-            )}`;
-
-
-    document.getElementById(
-        "savingSummaryPercent"
-    ).textContent =
-        `${percent.toFixed(1)}%`;
-
 }
 
 
 
-/* ================================= */
-/* DASHBOARD TOTALS */
-/* ================================= */
-
+/* TOTALS */
 
 function renderTotals() {
 
@@ -1139,6 +1493,14 @@ function renderTotals() {
     ).textContent =
         displayMoney(
             totals.totalCreditUsed
+        );
+
+
+    document.getElementById(
+        "totalLoanOutstanding"
+    ).textContent =
+        displayMoney(
+            totals.totalLoanOutstanding
         );
 
 
@@ -1175,9 +1537,7 @@ function renderTotals() {
     const updatedCount =
         financeData.accounts.filter(
             account =>
-                Boolean(
-                    account.updated
-                )
+                Boolean(account.updated)
         ).length;
 
 
@@ -1212,10 +1572,7 @@ function renderTotals() {
 
 
 
-/* ================================= */
 /* ANALYTICS */
-/* ================================= */
-
 
 function renderAnalytics() {
 
@@ -1236,6 +1593,14 @@ function renderAnalytics() {
     ).textContent =
         displayMoney(
             totals.totalCreditUsed
+        );
+
+
+    document.getElementById(
+        "analyticsLoans"
+    ).textContent =
+        displayMoney(
+            totals.totalLoanOutstanding
         );
 
 
@@ -1262,6 +1627,11 @@ function renderAnalytics() {
 
     renderCreditAnalytics();
 
+
+    renderLiabilityAnalytics(
+        totals
+    );
+
 }
 
 
@@ -1283,19 +1653,17 @@ function renderBankDistribution(
 
             const percentage =
                 totalCash > 0
-                    ?
-                    (
+
+                    ? (
                         account.balance /
                         totalCash
                     ) * 100
-                    :
-                    0;
+
+                    : 0;
 
 
             const row =
-                document.createElement(
-                    "div"
-                );
+                document.createElement("div");
 
 
             row.className =
@@ -1307,9 +1675,7 @@ function renderBankDistribution(
                 <div class="distribution-top">
 
                     <span class="distribution-name">
-
                         ${account.name}
-
                     </span>
 
                     <span class="distribution-value money">
@@ -1342,9 +1708,7 @@ function renderBankDistribution(
             `;
 
 
-            container.appendChild(
-                row
-            );
+            container.appendChild(row);
 
         }
     );
@@ -1368,22 +1732,20 @@ function renderCreditAnalytics() {
 
             const percentage =
                 card.limit > 0
-                    ?
-                    Math.min(
+
+                    ? Math.min(
                         (
                             card.used /
                             card.limit
                         ) * 100,
                         100
                     )
-                    :
-                    0;
+
+                    : 0;
 
 
             const row =
-                document.createElement(
-                    "div"
-                );
+                document.createElement("div");
 
 
             row.className =
@@ -1395,12 +1757,115 @@ function renderCreditAnalytics() {
                 <div class="distribution-top">
 
                     <span class="distribution-name">
-
                         ${card.name}
-
                     </span>
 
                     <span class="distribution-value">
+                        ${percentage.toFixed(1)}%
+                    </span>
+
+                </div>
+
+
+                <div class="distribution-bar">
+
+                    <div
+                        class="distribution-fill"
+                        style="
+                            width:
+                            ${percentage}%
+                        "
+                    ></div>
+
+                </div>
+
+            `;
+
+
+            container.appendChild(row);
+
+        }
+    );
+
+}
+
+
+function renderLiabilityAnalytics(
+    totals
+) {
+
+    const container =
+        document.getElementById(
+            "liabilityAnalytics"
+        );
+
+
+    container.innerHTML = "";
+
+
+    const totalLiabilities =
+        totals.totalCreditUsed +
+        totals.totalLoanOutstanding;
+
+
+    const liabilities = [
+
+        {
+            name:
+                "Credit Cards",
+
+            value:
+                totals.totalCreditUsed
+        },
+
+        {
+            name:
+                "Islamic Financing",
+
+            value:
+                totals.totalLoanOutstanding
+        }
+
+    ];
+
+
+    liabilities.forEach(
+        item => {
+
+            const percentage =
+                totalLiabilities > 0
+
+                    ? (
+                        item.value /
+                        totalLiabilities
+                    ) * 100
+
+                    : 0;
+
+
+            const row =
+                document.createElement("div");
+
+
+            row.className =
+                "distribution-item";
+
+
+            row.innerHTML = `
+
+                <div class="distribution-top">
+
+                    <span class="distribution-name">
+                        ${item.name}
+                    </span>
+
+                    <span class="distribution-value">
+
+                        ${displayMoney(
+                            item.value
+                        )}
+
+                        ·
 
                         ${percentage.toFixed(1)}%
 
@@ -1424,9 +1889,7 @@ function renderCreditAnalytics() {
             `;
 
 
-            container.appendChild(
-                row
-            );
+            container.appendChild(row);
 
         }
     );
@@ -1435,10 +1898,7 @@ function renderCreditAnalytics() {
 
 
 
-/* ================================= */
 /* ACCOUNT MODAL */
-/* ================================= */
-
 
 function openBalanceModal(id) {
 
@@ -1470,21 +1930,7 @@ function openBalanceModal(id) {
 
     document.getElementById(
         "balanceModal"
-    ).classList.add(
-        "show"
-    );
-
-
-    setTimeout(
-        () => {
-
-            document.getElementById(
-                "balanceInput"
-            ).focus();
-
-        },
-        100
-    );
+    ).classList.add("show");
 
 }
 
@@ -1493,9 +1939,7 @@ function closeBalanceModal() {
 
     document.getElementById(
         "balanceModal"
-    ).classList.remove(
-        "show"
-    );
+    ).classList.remove("show");
 
 }
 
@@ -1517,9 +1961,7 @@ function saveBalance() {
         );
 
 
-    if (
-        Number.isNaN(value)
-    ) {
+    if (Number.isNaN(value)) {
 
         alert(
             "Please enter a valid balance."
@@ -1548,10 +1990,7 @@ function saveBalance() {
 
 
 
-/* ================================= */
 /* CREDIT MODAL */
-/* ================================= */
-
 
 function openCreditModal(id) {
 
@@ -1590,14 +2029,13 @@ function openCreditModal(id) {
     document.getElementById(
         "creditDueDateInput"
     ).value =
-        activeCreditCard.dueDate || "";
+        activeCreditCard.dueDate ||
+        "";
 
 
     document.getElementById(
         "creditModal"
-    ).classList.add(
-        "show"
-    );
+    ).classList.add("show");
 
 }
 
@@ -1606,9 +2044,7 @@ function closeCreditModal() {
 
     document.getElementById(
         "creditModal"
-    ).classList.remove(
-        "show"
-    );
+    ).classList.remove("show");
 
 }
 
@@ -1638,30 +2074,13 @@ function saveCredit() {
         );
 
 
-    const dueDate =
-        document.getElementById(
-            "creditDueDateInput"
-        ).value;
-
-
     if (
         Number.isNaN(used) ||
         Number.isNaN(limit)
     ) {
 
         alert(
-            "Please enter valid credit card values."
-        );
-
-        return;
-
-    }
-
-
-    if (used < 0 || limit < 0) {
-
-        alert(
-            "Values cannot be negative."
+            "Please enter valid credit values."
         );
 
         return;
@@ -1678,7 +2097,9 @@ function saveCredit() {
 
 
     activeCreditCard.dueDate =
-        dueDate;
+        document.getElementById(
+            "creditDueDateInput"
+        ).value;
 
 
     saveData();
@@ -1691,10 +2112,237 @@ function saveCredit() {
 
 
 
-/* ================================= */
-/* SAVINGS MODAL */
-/* ================================= */
+/* LOAN MODAL */
 
+function openLoanModal(id) {
+
+    activeLoan =
+        financeData.loans.find(
+            loan =>
+                loan.id === id
+        );
+
+
+    if (!activeLoan) {
+
+        return;
+
+    }
+
+
+    document.getElementById(
+        "loanModalName"
+    ).textContent =
+        activeLoan.name;
+
+
+    document.getElementById(
+        "loanOriginalInput"
+    ).value =
+        activeLoan.originalAmount;
+
+
+    document.getElementById(
+        "loanContractTotalInput"
+    ).value =
+        activeLoan.contractedTotal;
+
+
+    document.getElementById(
+        "loanOutstandingInput"
+    ).value =
+        activeLoan.outstanding;
+
+
+    document.getElementById(
+        "loanMonthlyInput"
+    ).value =
+        activeLoan.monthlyInstallment;
+
+
+    document.getElementById(
+        "loanProfitRateInput"
+    ).value =
+        activeLoan.profitRate;
+
+
+    document.getElementById(
+        "loanTotalInstallmentsInput"
+    ).value =
+        activeLoan.totalInstallments;
+
+
+    document.getElementById(
+        "loanPaidInstallmentsInput"
+    ).value =
+        activeLoan.paidInstallments;
+
+
+    document.getElementById(
+        "loanNextPaymentInput"
+    ).value =
+        activeLoan.nextPaymentDate ||
+        "";
+
+
+    document.getElementById(
+        "loanEndDateInput"
+    ).value =
+        activeLoan.endDate ||
+        "";
+
+
+    document.getElementById(
+        "loanModal"
+    ).classList.add("show");
+
+}
+
+
+function closeLoanModal() {
+
+    document.getElementById(
+        "loanModal"
+    ).classList.remove("show");
+
+}
+
+
+function saveLoan() {
+
+    if (!activeLoan) {
+
+        return;
+
+    }
+
+
+    const originalAmount =
+        parseFloat(
+            document.getElementById(
+                "loanOriginalInput"
+            ).value
+        ) || 0;
+
+
+    const contractedTotal =
+        parseFloat(
+            document.getElementById(
+                "loanContractTotalInput"
+            ).value
+        ) || 0;
+
+
+    const outstanding =
+        parseFloat(
+            document.getElementById(
+                "loanOutstandingInput"
+            ).value
+        ) || 0;
+
+
+    const monthlyInstallment =
+        parseFloat(
+            document.getElementById(
+                "loanMonthlyInput"
+            ).value
+        ) || 0;
+
+
+    const profitRate =
+        parseFloat(
+            document.getElementById(
+                "loanProfitRateInput"
+            ).value
+        ) || 0;
+
+
+    const totalInstallments =
+        parseInt(
+            document.getElementById(
+                "loanTotalInstallmentsInput"
+            ).value
+        ) || 0;
+
+
+    const paidInstallments =
+        parseInt(
+            document.getElementById(
+                "loanPaidInstallmentsInput"
+            ).value
+        ) || 0;
+
+
+    if (
+        paidInstallments >
+        totalInstallments &&
+        totalInstallments > 0
+    ) {
+
+        alert(
+            "Paid installments cannot exceed total installments."
+        );
+
+        return;
+
+    }
+
+
+    activeLoan.originalAmount =
+        originalAmount;
+
+
+    activeLoan.contractedTotal =
+        contractedTotal;
+
+
+    activeLoan.outstanding =
+        outstanding;
+
+
+    activeLoan.monthlyInstallment =
+        monthlyInstallment;
+
+
+    activeLoan.profitRate =
+        profitRate;
+
+
+    activeLoan.totalInstallments =
+        totalInstallments;
+
+
+    activeLoan.paidInstallments =
+        paidInstallments;
+
+
+    activeLoan.nextPaymentDate =
+        document.getElementById(
+            "loanNextPaymentInput"
+        ).value;
+
+
+    activeLoan.endDate =
+        document.getElementById(
+            "loanEndDateInput"
+        ).value;
+
+
+    activeLoan.updated =
+        getTodayFormatted();
+
+
+    saveData();
+
+    closeLoanModal();
+
+    render();
+
+}
+
+
+
+/* SAVINGS MODAL */
 
 function openSavingsModal() {
 
@@ -1712,9 +2360,7 @@ function openSavingsModal() {
 
     document.getElementById(
         "savingsModal"
-    ).classList.add(
-        "show"
-    );
+    ).classList.add("show");
 
 }
 
@@ -1723,9 +2369,7 @@ function closeSavingsModal() {
 
     document.getElementById(
         "savingsModal"
-    ).classList.remove(
-        "show"
-    );
+    ).classList.remove("show");
 
 }
 
@@ -1762,20 +2406,6 @@ function saveSavings() {
     }
 
 
-    if (
-        savings < 0 ||
-        goal < 0
-    ) {
-
-        alert(
-            "Savings values cannot be negative."
-        );
-
-        return;
-
-    }
-
-
     financeData.savings.current =
         savings;
 
@@ -1794,10 +2424,7 @@ function saveSavings() {
 
 
 
-/* ================================= */
-/* PRIVACY MODE */
-/* ================================= */
-
+/* PRIVACY */
 
 function toggleBalances() {
 
@@ -1809,20 +2436,18 @@ function toggleBalances() {
         "hideBalances"
     ).textContent =
         balancesHidden
-            ?
-            "👁 Show Balances"
-            :
-            "👁 Hide Balances";
+
+            ? "👁 Show Balances"
+
+            : "👁 Hide Balances";
 
 
     document.getElementById(
         "mobileHideBalances"
     ).textContent =
         balancesHidden
-            ?
-            "🙈"
-            :
-            "👁";
+            ? "🙈"
+            : "👁";
 
 
     render();
@@ -1847,10 +2472,7 @@ document.getElementById(
 
 
 
-/* ================================= */
 /* CLOSE MODALS */
-/* ================================= */
-
 
 window.addEventListener(
     "click",
@@ -1864,6 +2486,10 @@ window.addEventListener(
 
             document.getElementById(
                 "creditModal"
+            ),
+
+            document.getElementById(
+                "loanModal"
             ),
 
             document.getElementById(
@@ -1905,6 +2531,8 @@ document.addEventListener(
 
             closeCreditModal();
 
+            closeLoanModal();
+
             closeSavingsModal();
 
         }
@@ -1914,16 +2542,15 @@ document.addEventListener(
 
 
 
-/* ================================= */
-/* MASTER RENDER */
-/* ================================= */
-
+/* RENDER */
 
 function render() {
 
     renderAccounts();
 
     renderCreditCards();
+
+    renderLoans();
 
     renderTotals();
 
