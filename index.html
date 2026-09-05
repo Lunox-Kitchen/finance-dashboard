@@ -8,6 +8,8 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <meta name="theme-color" content="#080b10">
+
     <title>My Finance</title>
 
     <link rel="stylesheet" href="style.css">
@@ -17,54 +19,81 @@
 
 <div class="app">
 
+    <!-- SIDEBAR -->
     <aside class="sidebar">
 
         <div class="logo">
+
             <div class="logo-icon">S</div>
 
             <div>
                 <h2>My Finance</h2>
                 <span>Personal Dashboard</span>
             </div>
+
         </div>
+
 
         <nav>
 
-            <button class="nav-item active">
-                <span>⌂</span>
-                Dashboard
+            <button
+                class="nav-item active"
+                data-page="dashboard"
+                onclick="showPage('dashboard', this)"
+            >
+                <span class="nav-icon">⌂</span>
+                <span class="nav-text">Dashboard</span>
             </button>
 
-            <button class="nav-item">
-                <span>▣</span>
-                Accounts
+
+            <button
+                class="nav-item"
+                data-page="accounts"
+                onclick="showPage('accounts', this)"
+            >
+                <span class="nav-icon">▣</span>
+                <span class="nav-text">Accounts</span>
             </button>
 
-            <button class="nav-item">
-                <span>💳</span>
-                Credit Cards
+
+            <button
+                class="nav-item"
+                data-page="credit"
+                onclick="showPage('credit', this)"
+            >
+                <span class="nav-icon">💳</span>
+                <span class="nav-text">Credit</span>
             </button>
 
-            <button class="nav-item">
-                <span>◎</span>
-                Savings
+
+            <button
+                class="nav-item"
+                data-page="savings"
+                onclick="showPage('savings', this)"
+            >
+                <span class="nav-icon">◎</span>
+                <span class="nav-text">Savings</span>
             </button>
 
-            <button class="nav-item">
-                <span>◔</span>
-                Analytics
-            </button>
 
-            <button class="nav-item">
-                <span>⚙</span>
-                Settings
+            <button
+                class="nav-item"
+                data-page="analytics"
+                onclick="showPage('analytics', this)"
+            >
+                <span class="nav-icon">◔</span>
+                <span class="nav-text">Analytics</span>
             </button>
 
         </nav>
 
+
         <div class="sidebar-bottom">
 
-            <button id="hideBalances" class="privacy-button">
+            <button
+                id="hideBalances"
+                class="privacy-button"
+            >
                 👁 Hide Balances
             </button>
 
@@ -73,16 +102,30 @@
     </aside>
 
 
+    <!-- MAIN -->
     <main class="main">
 
         <header>
 
             <div>
-                <p class="welcome">PERSONAL FINANCE</p>
-                <h1>Dashboard</h1>
+                <p class="welcome">
+                    PERSONAL FINANCE
+                </p>
+
+                <h1 id="pageTitle">
+                    Dashboard
+                </h1>
             </div>
 
+
             <div class="header-right">
+
+                <button
+                    class="mobile-privacy-button"
+                    id="mobileHideBalances"
+                >
+                    👁
+                </button>
 
                 <div class="status">
                     <span class="status-dot"></span>
@@ -94,201 +137,685 @@
         </header>
 
 
-        <section class="hero-card">
+        <!-- ========================= -->
+        <!-- DASHBOARD PAGE -->
+        <!-- ========================= -->
 
-            <div>
+        <section
+            id="page-dashboard"
+            class="page active-page"
+        >
 
-                <p>Total Net Worth</p>
-
-                <h2
-                    class="money"
-                    id="netWorth"
-                >
-                    BHD 0.000
-                </h2>
-
-                <span class="hero-subtitle">
-                    Across all accounts
-                </span>
-
-            </div>
-
-            <div class="hero-stats">
+            <section class="hero-card">
 
                 <div>
+
+                    <p>Total Net Worth</p>
+
+                    <h2
+                        class="money"
+                        id="netWorth"
+                    >
+                        BHD 0.000
+                    </h2>
+
+                    <span class="hero-subtitle">
+                        Cash minus credit card balances
+                    </span>
+
+                </div>
+
+
+                <div class="hero-stats">
+
+                    <div>
+                        <span>Total Cash</span>
+
+                        <strong
+                            class="money"
+                            id="totalCash"
+                        >
+                            BHD 0.000
+                        </strong>
+                    </div>
+
+
+                    <div>
+                        <span>Credit Used</span>
+
+                        <strong
+                            class="money"
+                            id="creditUsed"
+                        >
+                            BHD 0.000
+                        </strong>
+                    </div>
+
+
+                    <div>
+                        <span>Savings</span>
+
+                        <strong
+                            class="money"
+                            id="totalSavings"
+                        >
+                            BHD 0.000
+                        </strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <p class="section-label">
+                            ACCOUNTS
+                        </p>
+
+                        <h2>My Banks</h2>
+                    </div>
+
+
+                    <button
+                        class="text-button"
+                        onclick="goToPage('accounts')"
+                    >
+                        View all →
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="dashboardAccountsGrid"
+                    class="accounts-grid"
+                ></div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <p class="section-label">
+                            CREDIT
+                        </p>
+
+                        <h2>Credit Cards</h2>
+                    </div>
+
+
+                    <button
+                        class="text-button"
+                        onclick="goToPage('credit')"
+                    >
+                        View all →
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="dashboardCreditGrid"
+                    class="credit-grid"
+                ></div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <p class="section-label">
+                            SAVINGS
+                        </p>
+
+                        <h2>Savings Progress</h2>
+                    </div>
+
+
+                    <button
+                        class="primary-button"
+                        onclick="openSavingsModal()"
+                    >
+                        Update
+                    </button>
+
+                </div>
+
+
+                <div class="dashboard-savings-card">
+
+                    <div class="dashboard-savings-info">
+
+                        <div>
+                            <span>Current</span>
+
+                            <strong
+                                class="money"
+                                id="dashboardSavingsAmount"
+                            >
+                                BHD 0.000
+                            </strong>
+                        </div>
+
+
+                        <div class="goal-right">
+                            <span>Goal</span>
+
+                            <strong
+                                class="money"
+                                id="dashboardSavingsGoal"
+                            >
+                                BHD 5,000.000
+                            </strong>
+                        </div>
+
+                    </div>
+
+
+                    <div class="progress-track large-progress">
+
+                        <div
+                            class="progress"
+                            id="dashboardSavingsProgress"
+                        ></div>
+
+                    </div>
+
+
+                    <div class="savings-bottom">
+
+                        <span id="dashboardSavingsPercent">
+                            0% completed
+                        </span>
+
+                        <span
+                            id="dashboardSavingsRemaining"
+                            class="money"
+                        >
+                            BHD 5,000.000 remaining
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- ========================= -->
+        <!-- ACCOUNTS PAGE -->
+        <!-- ========================= -->
+
+        <section
+            id="page-accounts"
+            class="page"
+        >
+
+            <section class="summary-grid">
+
+                <div class="summary-card">
+
                     <span>Total Cash</span>
+
                     <strong
                         class="money"
-                        id="totalCash"
+                        id="accountsTotalCash"
                     >
                         BHD 0.000
                     </strong>
+
                 </div>
 
-                <div>
-                    <span>Credit Used</span>
-                    <strong
-                        class="money"
-                        id="creditUsed"
-                    >
-                        BHD 0.000
+
+                <div class="summary-card">
+
+                    <span>Number of Accounts</span>
+
+                    <strong id="accountCount">
+                        5
                     </strong>
+
                 </div>
 
-                <div>
-                    <span>Savings</span>
-                    <strong
-                        class="money"
-                        id="totalSavings"
-                    >
-                        BHD 0.000
+
+                <div class="summary-card">
+
+                    <span>Recently Updated</span>
+
+                    <strong id="recentlyUpdated">
+                        0 / 5
                     </strong>
+
                 </div>
 
-            </div>
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <p class="section-label">
+                            ACCOUNTS
+                        </p>
+
+                        <h2>All Bank Accounts</h2>
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="accountsGrid"
+                    class="accounts-grid"
+                ></div>
+
+            </section>
 
         </section>
 
 
-        <section class="section">
+        <!-- ========================= -->
+        <!-- CREDIT PAGE -->
+        <!-- ========================= -->
 
-            <div class="section-header">
+        <section
+            id="page-credit"
+            class="page"
+        >
 
-                <div>
-                    <p class="section-label">
-                        ACCOUNTS
-                    </p>
+            <section class="summary-grid">
 
-                    <h2>My Banks</h2>
+                <div class="summary-card">
+
+                    <span>Total Credit Used</span>
+
+                    <strong
+                        class="money"
+                        id="creditPageUsed"
+                    >
+                        BHD 0.000
+                    </strong>
+
                 </div>
 
-                <button
-                    class="secondary-button"
-                    onclick="resetBalances()"
-                >
-                    Reset
-                </button>
 
-            </div>
+                <div class="summary-card">
+
+                    <span>Total Credit Limit</span>
+
+                    <strong
+                        class="money"
+                        id="creditPageLimit"
+                    >
+                        BHD 0.000
+                    </strong>
+
+                </div>
 
 
-            <div
-                id="accountsGrid"
-                class="accounts-grid"
-            ></div>
+                <div class="summary-card">
+
+                    <span>Overall Utilization</span>
+
+                    <strong id="creditPageUtilization">
+                        0%
+                    </strong>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <p class="section-label">
+                            CREDIT CARDS
+                        </p>
+
+                        <h2>Your Cards</h2>
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="creditCardsGrid"
+                    class="credit-grid"
+                ></div>
+
+            </section>
 
         </section>
 
 
-        <section class="section">
+        <!-- ========================= -->
+        <!-- SAVINGS PAGE -->
+        <!-- ========================= -->
 
-            <div class="section-header">
+        <section
+            id="page-savings"
+            class="page"
+        >
 
-                <div>
-                    <p class="section-label">
-                        CREDIT
-                    </p>
-
-                    <h2>Credit Cards</h2>
-                </div>
-
-            </div>
-
-
-            <div
-                id="creditCardsGrid"
-                class="credit-grid"
-            ></div>
-
-        </section>
-
-
-        <section class="section">
-
-            <div class="section-header">
+            <section class="savings-hero">
 
                 <div>
+
                     <p class="section-label">
-                        SAVINGS
+                        TOTAL SAVINGS
                     </p>
 
-                    <h2>Savings Goal</h2>
+                    <h2
+                        class="money big-savings-number"
+                        id="savingsAmount"
+                    >
+                        BHD 0.000
+                    </h2>
+
+                    <p class="muted">
+                        Your manually tracked savings
+                    </p>
+
                 </div>
+
 
                 <button
                     class="primary-button"
                     onclick="openSavingsModal()"
                 >
-                    + Add Savings
+                    Update Savings
                 </button>
 
-            </div>
+            </section>
 
 
-            <div class="savings-card">
+            <section class="section">
 
-                <div class="savings-top">
+                <div class="savings-card">
 
-                    <div>
+                    <div class="savings-top">
 
-                        <span>
-                            Current Savings
-                        </span>
+                        <div>
 
-                        <h2
-                            class="money"
-                            id="savingsAmount"
-                        >
-                            BHD 0.000
-                        </h2>
+                            <span>
+                                Current Savings
+                            </span>
+
+                            <h2
+                                class="money"
+                                id="savingsCurrentDetail"
+                            >
+                                BHD 0.000
+                            </h2>
+
+                        </div>
+
+
+                        <div class="goal">
+
+                            <span>
+                                Goal
+                            </span>
+
+                            <strong
+                                class="money"
+                                id="savingsGoal"
+                            >
+                                BHD 5,000.000
+                            </strong>
+
+                        </div>
 
                     </div>
 
 
-                    <div class="goal">
+                    <div class="progress-track large-progress">
 
-                        <span>
-                            Goal
+                        <div
+                            class="progress"
+                            id="savingsProgress"
+                        ></div>
+
+                    </div>
+
+
+                    <div class="savings-bottom">
+
+                        <span id="savingsPercent">
+                            0% completed
                         </span>
+
+                        <span
+                            class="money"
+                            id="savingsRemaining"
+                        >
+                            BHD 5,000.000 remaining
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <p class="section-label">
+                            GOAL BREAKDOWN
+                        </p>
+
+                        <h2>Progress</h2>
+                    </div>
+
+                </div>
+
+
+                <div class="summary-grid">
+
+                    <div class="summary-card">
+
+                        <span>Current</span>
 
                         <strong
                             class="money"
-                            id="savingsGoal"
+                            id="savingSummaryCurrent"
                         >
-                            BHD 5,000.000
+                            BHD 0.000
+                        </strong>
+
+                    </div>
+
+
+                    <div class="summary-card">
+
+                        <span>Remaining</span>
+
+                        <strong
+                            class="money"
+                            id="savingSummaryRemaining"
+                        >
+                            BHD 0.000
+                        </strong>
+
+                    </div>
+
+
+                    <div class="summary-card">
+
+                        <span>Completion</span>
+
+                        <strong
+                            id="savingSummaryPercent"
+                        >
+                            0%
                         </strong>
 
                     </div>
 
                 </div>
 
+            </section>
 
-                <div class="progress-track">
-
-                    <div
-                        class="progress"
-                        id="savingsProgress"
-                    ></div>
-
-                </div>
+        </section>
 
 
-                <div class="savings-bottom">
+        <!-- ========================= -->
+        <!-- ANALYTICS PAGE -->
+        <!-- ========================= -->
 
-                    <span id="savingsPercent">
-                        0% completed
-                    </span>
+        <section
+            id="page-analytics"
+            class="page"
+        >
 
-                    <span
+            <section class="analytics-grid">
+
+                <div class="analytics-card">
+
+                    <span>Total Cash</span>
+
+                    <strong
                         class="money"
-                        id="savingsRemaining"
+                        id="analyticsCash"
                     >
-                        BHD 5,000.000 remaining
-                    </span>
+                        BHD 0.000
+                    </strong>
+
+                    <small>
+                        Across all bank accounts
+                    </small>
 
                 </div>
 
-            </div>
+
+                <div class="analytics-card">
+
+                    <span>Credit Used</span>
+
+                    <strong
+                        class="money"
+                        id="analyticsCredit"
+                    >
+                        BHD 0.000
+                    </strong>
+
+                    <small>
+                        Across both credit cards
+                    </small>
+
+                </div>
+
+
+                <div class="analytics-card">
+
+                    <span>Net Worth</span>
+
+                    <strong
+                        class="money"
+                        id="analyticsNetWorth"
+                    >
+                        BHD 0.000
+                    </strong>
+
+                    <small>
+                        Cash minus credit used
+                    </small>
+
+                </div>
+
+
+                <div class="analytics-card">
+
+                    <span>Savings</span>
+
+                    <strong
+                        class="money"
+                        id="analyticsSavings"
+                    >
+                        BHD 0.000
+                    </strong>
+
+                    <small>
+                        Manually tracked amount
+                    </small>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="analytics-panel">
+
+                    <div class="section-header">
+
+                        <div>
+
+                            <p class="section-label">
+                                BANK DISTRIBUTION
+                            </p>
+
+                            <h2>Where Your Money Is</h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div id="bankDistribution"></div>
+
+                </div>
+
+            </section>
+
+
+            <section class="section">
+
+                <div class="analytics-panel">
+
+                    <div class="section-header">
+
+                        <div>
+
+                            <p class="section-label">
+                                CREDIT UTILIZATION
+                            </p>
+
+                            <h2>Card Usage</h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div id="creditAnalytics"></div>
+
+                </div>
+
+            </section>
 
         </section>
 
@@ -296,6 +823,10 @@
 
 </div>
 
+
+<!-- ========================= -->
+<!-- BALANCE MODAL -->
+<!-- ========================= -->
 
 <div
     class="modal"
@@ -311,17 +842,21 @@
             ×
         </button>
 
+
         <p class="section-label">
             UPDATE ACCOUNT
         </p>
+
 
         <h2 id="modalBankName">
             Bank
         </h2>
 
+
         <label>
             Current Balance
         </label>
+
 
         <div class="input-wrapper">
 
@@ -332,9 +867,11 @@
                 id="balanceInput"
                 step="0.001"
                 inputmode="decimal"
+                placeholder="0.000"
             >
 
         </div>
+
 
         <button
             class="primary-button full"
@@ -347,6 +884,100 @@
 
 </div>
 
+
+<!-- ========================= -->
+<!-- CREDIT MODAL -->
+<!-- ========================= -->
+
+<div
+    class="modal"
+    id="creditModal"
+>
+
+    <div class="modal-content">
+
+        <button
+            class="close"
+            onclick="closeCreditModal()"
+        >
+            ×
+        </button>
+
+
+        <p class="section-label">
+            UPDATE CREDIT CARD
+        </p>
+
+
+        <h2 id="creditModalName">
+            Credit Card
+        </h2>
+
+
+        <label>
+            Amount Used
+        </label>
+
+        <div class="input-wrapper">
+
+            <span>BHD</span>
+
+            <input
+                type="number"
+                id="creditUsedInput"
+                step="0.001"
+                inputmode="decimal"
+                placeholder="0.000"
+            >
+
+        </div>
+
+
+        <label>
+            Credit Limit
+        </label>
+
+        <div class="input-wrapper">
+
+            <span>BHD</span>
+
+            <input
+                type="number"
+                id="creditLimitInput"
+                step="0.001"
+                inputmode="decimal"
+                placeholder="0.000"
+            >
+
+        </div>
+
+
+        <label>
+            Payment Due Date
+        </label>
+
+        <input
+            class="date-input"
+            type="date"
+            id="creditDueDateInput"
+        >
+
+
+        <button
+            class="primary-button full"
+            onclick="saveCredit()"
+        >
+            Save Card
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- SAVINGS MODAL -->
+<!-- ========================= -->
 
 <div
     class="modal"
@@ -362,11 +993,14 @@
             ×
         </button>
 
+
         <p class="section-label">
             SAVINGS
         </p>
 
+
         <h2>Update Savings</h2>
+
 
         <label>
             Current Savings
@@ -381,6 +1015,7 @@
                 id="savingsInput"
                 step="0.001"
                 inputmode="decimal"
+                placeholder="0.000"
             >
 
         </div>
@@ -399,15 +1034,17 @@
                 id="goalInput"
                 step="0.001"
                 inputmode="decimal"
+                placeholder="0.000"
             >
 
         </div>
+
 
         <button
             class="primary-button full"
             onclick="saveSavings()"
         >
-            Save
+            Save Savings
         </button>
 
     </div>
