@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>My Finance</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <div class="logo-icon">S</div>
+
+            <div>
+                <h2>My Finance</h2>
+                <span>Personal Dashboard</span>
+            </div>
+        </div>
+
+        <nav>
+
+            <button class="nav-item active">
+                <span>⌂</span>
+                Dashboard
+            </button>
+
+            <button class="nav-item">
+                <span>▣</span>
+                Accounts
+            </button>
+
+            <button class="nav-item">
+                <span>💳</span>
+                Credit Cards
+            </button>
+
+            <button class="nav-item">
+                <span>◎</span>
+                Savings
+            </button>
+
+            <button class="nav-item">
+                <span>◔</span>
+                Analytics
+            </button>
+
+            <button class="nav-item">
+                <span>⚙</span>
+                Settings
+            </button>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <button id="hideBalances" class="privacy-button">
+                👁 Hide Balances
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <main class="main">
+
+        <header>
+
+            <div>
+                <p class="welcome">PERSONAL FINANCE</p>
+                <h1>Dashboard</h1>
+            </div>
+
+            <div class="header-right">
+
+                <div class="status">
+                    <span class="status-dot"></span>
+                    Local Data
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <section class="hero-card">
+
+            <div>
+
+                <p>Total Net Worth</p>
+
+                <h2
+                    class="money"
+                    id="netWorth"
+                >
+                    BHD 0.000
+                </h2>
+
+                <span class="hero-subtitle">
+                    Across all accounts
+                </span>
+
+            </div>
+
+            <div class="hero-stats">
+
+                <div>
+                    <span>Total Cash</span>
+                    <strong
+                        class="money"
+                        id="totalCash"
+                    >
+                        BHD 0.000
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Credit Used</span>
+                    <strong
+                        class="money"
+                        id="creditUsed"
+                    >
+                        BHD 0.000
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Savings</span>
+                    <strong
+                        class="money"
+                        id="totalSavings"
+                    >
+                        BHD 0.000
+                    </strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+                    <p class="section-label">
+                        ACCOUNTS
+                    </p>
+
+                    <h2>My Banks</h2>
+                </div>
+
+                <button
+                    class="secondary-button"
+                    onclick="resetBalances()"
+                >
+                    Reset
+                </button>
+
+            </div>
+
+
+            <div
+                id="accountsGrid"
+                class="accounts-grid"
+            ></div>
+
+        </section>
+
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+                    <p class="section-label">
+                        CREDIT
+                    </p>
+
+                    <h2>Credit Cards</h2>
+                </div>
+
+            </div>
+
+
+            <div
+                id="creditCardsGrid"
+                class="credit-grid"
+            ></div>
+
+        </section>
+
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+                    <p class="section-label">
+                        SAVINGS
+                    </p>
+
+                    <h2>Savings Goal</h2>
+                </div>
+
+                <button
+                    class="primary-button"
+                    onclick="openSavingsModal()"
+                >
+                    + Add Savings
+                </button>
+
+            </div>
+
+
+            <div class="savings-card">
+
+                <div class="savings-top">
+
+                    <div>
+
+                        <span>
+                            Current Savings
+                        </span>
+
+                        <h2
+                            class="money"
+                            id="savingsAmount"
+                        >
+                            BHD 0.000
+                        </h2>
+
+                    </div>
+
+
+                    <div class="goal">
+
+                        <span>
+                            Goal
+                        </span>
+
+                        <strong
+                            class="money"
+                            id="savingsGoal"
+                        >
+                            BHD 5,000.000
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="progress-track">
+
+                    <div
+                        class="progress"
+                        id="savingsProgress"
+                    ></div>
+
+                </div>
+
+
+                <div class="savings-bottom">
+
+                    <span id="savingsPercent">
+                        0% completed
+                    </span>
+
+                    <span
+                        class="money"
+                        id="savingsRemaining"
+                    >
+                        BHD 5,000.000 remaining
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<div
+    class="modal"
+    id="balanceModal"
+>
+
+    <div class="modal-content">
+
+        <button
+            class="close"
+            onclick="closeBalanceModal()"
+        >
+            ×
+        </button>
+
+        <p class="section-label">
+            UPDATE ACCOUNT
+        </p>
+
+        <h2 id="modalBankName">
+            Bank
+        </h2>
+
+        <label>
+            Current Balance
+        </label>
+
+        <div class="input-wrapper">
+
+            <span>BHD</span>
+
+            <input
+                type="number"
+                id="balanceInput"
+                step="0.001"
+                inputmode="decimal"
+            >
+
+        </div>
+
+        <button
+            class="primary-button full"
+            onclick="saveBalance()"
+        >
+            Save Balance
+        </button>
+
+    </div>
+
+</div>
+
+
+<div
+    class="modal"
+    id="savingsModal"
+>
+
+    <div class="modal-content">
+
+        <button
+            class="close"
+            onclick="closeSavingsModal()"
+        >
+            ×
+        </button>
+
+        <p class="section-label">
+            SAVINGS
+        </p>
+
+        <h2>Update Savings</h2>
+
+        <label>
+            Current Savings
+        </label>
+
+        <div class="input-wrapper">
+
+            <span>BHD</span>
+
+            <input
+                type="number"
+                id="savingsInput"
+                step="0.001"
+                inputmode="decimal"
+            >
+
+        </div>
+
+
+        <label>
+            Savings Goal
+        </label>
+
+        <div class="input-wrapper">
+
+            <span>BHD</span>
+
+            <input
+                type="number"
+                id="goalInput"
+                step="0.001"
+                inputmode="decimal"
+            >
+
+        </div>
+
+        <button
+            class="primary-button full"
+            onclick="saveSavings()"
+        >
+            Save
+        </button>
+
+    </div>
+
+</div>
+
+
+<script src="app.js"></script>
+
+</body>
+</html>
