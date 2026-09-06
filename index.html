@@ -6,13 +6,23 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
 
     <meta name="theme-color" content="#080b10">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="My Finance">
+    <meta name="application-name" content="My Finance">
+    <meta name="description" content="Private personal finance dashboard for KFH, NBB and ila.">
 
     <title>My Finance</title>
 
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -1373,6 +1383,15 @@
 
 
 <script src="app.js"></script>
+<script>
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker.register("./service-worker.js").catch((error) => {
+                console.warn("Service worker registration failed:", error);
+            });
+        });
+    }
+</script>
 
 </body>
 </html>
