@@ -624,22 +624,27 @@ function parseIla(
   }
 
 
-  /* ILA CREDIT CARD CASH ADVANCE */
+  /* ILA CREDIT CARD CASH ADVANCE
+   * Example:
+   * Success! An amount of BHD 20.000 Credit Card Cash Advance transferred
+   * from card XXXX0695 to IBAN ending 1001 on 04/09/2026 20:47
+   * Available limit BHD 439.660 Enquiry 17123456
+   *
+   * We trust ila's bank-provided "Available limit" value rather than
+   * calculating the available credit ourselves.
+   */
 
   const cashAdvanceRegex =
-    /Credit Card Cash Advance transferred from card\s+X{4}(\d{4}).*?amount of\s+BHD\s?([\d.]+).*?Available limit\s+BHD\s?([\d.]+)/i;
+    /(?:Success!\s*)?An amount of\s+BHD\s?([\d.]+)\s+Credit Card Cash Advance transferred from card\s+(?:X{4}|\*{4})(\d{4})\s+to IBAN ending\s+(\d{4})\s+on\s+(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}:\d{2}).*?Available limit\s+BHD\s?([\d.]+)/i;
 
-  const cashAdvanceAltRegex =
-    /amount of\s+BHD\s?([\d.]+)\s+Credit Card Cash Advance transferred from card\s+X{4}(\d{4}).*?Available limit\s+BHD\s?([\d.]+)/i;
-
-
-  let cashAdvance =
+  const cashAdvance =
     message.match(
       cashAdvanceRegex
     );
 
-
-  if (cashAdvance) {
+  if (
+    cashAdvance
+  ) {
     return {
       bank:
         "ila",
@@ -654,25 +659,25 @@ function parseIla(
         "completed",
 
       merchant:
-        "Credit Card Cash Advance",
+        `Credit Card Cash Advance to IBAN ****${cashAdvance[3]}`,
 
       amount:
         Number(
-          cashAdvance[2]
+          cashAdvance[1]
         ),
 
       currency:
         "BHD",
 
       cardLast4:
-        cashAdvance[1],
+        cashAdvance[2],
 
       balanceAfter:
         null,
 
       availableCredit:
         Number(
-          cashAdvance[3]
+          cashAdvance[8]
         ),
 
       statementBalance:
@@ -685,10 +690,14 @@ function parseIla(
         null,
 
       transactionDate:
-        null,
+        convertDate(
+          cashAdvance[4],
+          cashAdvance[5],
+          cashAdvance[6]
+        ),
 
       transactionTime:
-        null,
+        cashAdvance[7],
 
       reference:
         null,
@@ -699,14 +708,18 @@ function parseIla(
   }
 
 
-  cashAdvance =
+  /* Fallback for older/shorter ila cash-advance wording. */
+
+  const cashAdvanceFallbackRegex =
+    /amount of\s+BHD\s?([\d.]+)\s+Credit Card Cash Advance transferred from card\s+(?:X{4}|\*{4})(\d{4}).*?Available limit\s+BHD\s?([\d.]+)/i;
+
+  const cashAdvanceFallback =
     message.match(
-      cashAdvanceAltRegex
+      cashAdvanceFallbackRegex
     );
 
-
   if (
-    cashAdvance
+    cashAdvanceFallback
   ) {
     return {
       bank:
@@ -726,21 +739,21 @@ function parseIla(
 
       amount:
         Number(
-          cashAdvance[1]
+          cashAdvanceFallback[1]
         ),
 
       currency:
         "BHD",
 
       cardLast4:
-        cashAdvance[2],
+        cashAdvanceFallback[2],
 
       balanceAfter:
         null,
 
       availableCredit:
         Number(
-          cashAdvance[3]
+          cashAdvanceFallback[3]
         ),
 
       statementBalance:
