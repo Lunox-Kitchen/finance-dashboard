@@ -354,16 +354,27 @@ function getTotals() {
     const totalCreditLimit = financeData.creditCards.reduce((sum, card) => sum + (Number(card.limit) || 0), 0);
     const totalLoanOutstanding = financeData.loans.reduce((sum, loan) => sum + (Number(loan.outstanding) || 0), 0);
     const totalMonthlyFinance = financeData.loans.reduce((sum, loan) => sum + (Number(loan.monthlyInstallment) || 0), 0);
-    const netWorth = totalCash - totalCreditUsed - totalLoanOutstanding;
+    const totalSavings = Number(financeData.savings.current) || 0;
+    const totalCreditAvailable = Math.max(totalCreditLimit - totalCreditUsed, 0);
+
+    // True net worth is still retained for Analytics.
+    const netWorth = totalCash + totalSavings - totalCreditUsed - totalLoanOutstanding;
+
+    // Dashboard headline intentionally excludes long-term KFH financing.
+    const currentPosition = totalCash + totalSavings - totalCreditUsed;
+
     const utilization = totalCreditLimit > 0 ? (totalCreditUsed / totalCreditLimit) * 100 : 0;
 
     return {
         totalCash,
         totalCreditUsed,
         totalCreditLimit,
+        totalCreditAvailable,
         totalLoanOutstanding,
         totalMonthlyFinance,
+        totalSavings,
         netWorth,
+        currentPosition,
         utilization
     };
 }
@@ -620,11 +631,11 @@ function setText(id, value) {
 function renderTotals() {
     const totals = getTotals();
 
-    setText("netWorth", displayMoney(totals.netWorth));
+    setText("netWorth", displayMoney(totals.currentPosition));
     setText("totalCash", displayMoney(totals.totalCash));
     setText("creditUsed", displayMoney(totals.totalCreditUsed));
-    setText("totalLoanOutstanding", displayMoney(totals.totalLoanOutstanding));
-    setText("totalSavings", displayMoney(financeData.savings.current));
+    setText("availableCredit", displayMoney(totals.totalCreditAvailable));
+    setText("totalSavings", displayMoney(totals.totalSavings));
 
     setText("accountsTotalCash", displayMoney(totals.totalCash));
     setText("accountCount", String(financeData.accounts.length));
