@@ -4,19 +4,20 @@ const STORAGE_KEY = "financeDashboardDataV3";
 
 const defaultData = {
     accounts: [
-        { id: "kfh", name: "KFH", short: "K", balance: 0, updated: null }
+        { id: "kfh", name: "KFH", short: "K", balance: 1.050, updated: null }
     ],
     creditCards: [
         {
             id: "nbbCredit",
             bank: "NBB",
             name: "NBB Credit",
-            used: 0,
-            limit: 1000,
-            availableCredit: null,
+            used: 140.484,
+            limit: 200.000,
+            availableCredit: 59.516,
             statementBalance: null,
             minimumPayment: null,
             dueDate: "",
+            dueDay: 27,
             cardLast4: null,
             updated: null
         },
@@ -24,12 +25,13 @@ const defaultData = {
             id: "ilaCredit",
             bank: "ila",
             name: "ila Credit",
-            used: 0,
-            limit: 1000,
-            availableCredit: null,
+            used: 562.040,
+            limit: 1000.000,
+            availableCredit: 437.960,
             statementBalance: null,
             minimumPayment: null,
             dueDate: "",
+            dueDay: 27,
             cardLast4: null,
             updated: null
         }
@@ -40,22 +42,22 @@ const defaultData = {
             bank: "KFH",
             name: "KFH Personal Finance",
             type: "Islamic Financing",
-            originalAmount: 0,
+            originalAmount: 14200.000,
             contractedTotal: 0,
-            outstanding: 0,
-            monthlyInstallment: 0,
+            outstanding: 14200.000,
+            monthlyInstallment: 201.000,
             profitRate: 0,
-            totalInstallments: 0,
+            totalInstallments: 84,
             paidInstallments: 0,
             nextPaymentDate: "",
             endDate: "",
             updated: null
         }
     ],
-    savings: { current: 0, goal: 5000 }
+    savings: { current: 0.000, goal: 5000.000 }
 };
 
-let financeData = loadData();
+let financeData = JSON.parse(JSON.stringify(defaultData));
 let remoteTransactions = [];
 let activeAccount = null;
 let activeCreditCard = null;
@@ -66,87 +68,11 @@ let realtimeChannel = null;
 let refreshTimer = null;
 
 /* =========================================================
-   LOCAL DATA — ONLY MANUAL VALUES
+   SUPABASE IS THE SOURCE OF TRUTH
    ========================================================= */
 
 function cloneDefaultData() {
     return JSON.parse(JSON.stringify(defaultData));
-}
-
-function loadData() {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (!saved) {
-            const oldSaved = localStorage.getItem("financeDashboardDataV2") || localStorage.getItem("financeDashboardData");
-            return oldSaved ? normalizeData(JSON.parse(oldSaved)) : cloneDefaultData();
-        }
-        return normalizeData(JSON.parse(saved));
-    } catch (error) {
-        console.error("Unable to load finance data:", error);
-        return cloneDefaultData();
-    }
-}
-
-function normalizeData(data) {
-    const normalized = cloneDefaultData();
-
-    if (data && Array.isArray(data.accounts)) {
-        const oldKfh = data.accounts.find(item => item.id === "kfh" || item.name === "KFH");
-        if (oldKfh) {
-            normalized.accounts[0].balance = Number(oldKfh.balance) || 0;
-            normalized.accounts[0].updated = oldKfh.updated || null;
-        }
-    }
-
-    if (data && Array.isArray(data.creditCards)) {
-        normalized.creditCards.forEach(card => {
-            const existing = data.creditCards.find(item => item.id === card.id);
-            if (!existing) return;
-            card.used = Number(existing.used) || 0;
-            card.limit = Number(existing.limit) || 0;
-            card.dueDate = existing.dueDate || "";
-        });
-    }
-
-    if (data && Array.isArray(data.loans)) {
-        const existing = data.loans.find(item => item.id === "kfhFinance");
-        if (existing) {
-            const loan = normalized.loans[0];
-            loan.originalAmount = Number(existing.originalAmount) || 0;
-            loan.contractedTotal = Number(existing.contractedTotal) || 0;
-            loan.outstanding = Number(existing.outstanding) || 0;
-            loan.monthlyInstallment = Number(existing.monthlyInstallment) || 0;
-            loan.profitRate = Number(existing.profitRate) || 0;
-            loan.totalInstallments = Number(existing.totalInstallments) || 0;
-            loan.paidInstallments = Number(existing.paidInstallments) || 0;
-            loan.nextPaymentDate = existing.nextPaymentDate || "";
-            loan.endDate = existing.endDate || "";
-            loan.updated = existing.updated || null;
-        }
-    }
-
-    if (data && data.savings) {
-        normalized.savings.current = Number(data.savings.current) || 0;
-        normalized.savings.goal = Number(data.savings.goal) || 0;
-    }
-
-    return normalized;
-}
-
-function saveData() {
-    const localOnly = {
-        accounts: financeData.accounts,
-        creditCards: financeData.creditCards.map(card => ({
-            id: card.id,
-            name: card.name,
-            used: card.used,
-            limit: card.limit,
-            dueDate: card.dueDate
-        })),
-        loans: financeData.loans,
-        savings: financeData.savings
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(localOnly));
 }
 
 /* =========================================================
@@ -181,6 +107,14 @@ function formatDate(dateString) {
         month: "short",
         year: "numeric"
     });
+}
+
+function ordinalDay(day) {
+    const n = Number(day);
+    if (!Number.isFinite(n) || n < 1 || n > 31) return "Not set";
+    const mod100 = n % 100;
+    const suffix = mod100 >= 11 && mod100 <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th");
+    return `${n}${suffix} of each month`;
 }
 
 function formatRemoteTimestamp(value) {
@@ -306,21 +240,27 @@ async function loadRemoteData() {
     try {
         setConnectionStatus("Syncing…", "loading");
 
-        const [accountsResult, transactionsResult] = await Promise.all([
+        const [accountsResult, transactionsResult, settingsResult] = await Promise.all([
             supabaseClient
                 .from("accounts")
-                .select("bank,account_type,card_last4,balance,available_credit,statement_balance,minimum_payment,payment_due_date,updated_at"),
+                .select("bank,account_type,card_last4,balance,available_credit,credit_limit,statement_balance,minimum_payment,payment_due_date,due_day,updated_at"),
             supabaseClient
                 .from("transactions")
                 .select("bank,merchant,amount,direction,card_last4,balance_after,transaction_date,transaction_time,category,instrument_type,transaction_type,status,reference,currency,created_at")
                 .order("created_at", { ascending: false })
-                .limit(100)
+                .limit(100),
+            supabaseClient
+                .from("finance_settings")
+                .select("user_id,savings_current,savings_goal,loan_original_amount,loan_contracted_total,loan_outstanding,loan_monthly_installment,loan_profit_rate,loan_total_installments,loan_paid_installments,loan_next_payment_date,loan_end_date,updated_at")
+                .maybeSingle()
         ]);
 
         if (accountsResult.error) throw accountsResult.error;
         if (transactionsResult.error) throw transactionsResult.error;
+        if (settingsResult.error) throw settingsResult.error;
 
         mergeRemoteAccounts(accountsResult.data || []);
+        mergeRemoteSettings(settingsResult.data || null);
         remoteTransactions = transactionsResult.data || [];
         render();
         setConnectionStatus("Supabase Connected", "ok");
@@ -352,19 +292,42 @@ function mergeRemoteAccounts(rows) {
         card.availableCredit = row.available_credit === null || row.available_credit === undefined
             ? null
             : Number(row.available_credit);
+        card.limit = row.credit_limit === null || row.credit_limit === undefined
+            ? card.limit
+            : Number(row.credit_limit);
         card.statementBalance = row.statement_balance === null || row.statement_balance === undefined
             ? null
             : Number(row.statement_balance);
         card.minimumPayment = row.minimum_payment === null || row.minimum_payment === undefined
             ? null
             : Number(row.minimum_payment);
-        card.dueDate = row.payment_due_date || card.dueDate;
+        card.dueDate = row.payment_due_date || "";
+        card.dueDay = row.due_day === null || row.due_day === undefined ? card.dueDay : Number(row.due_day);
         card.updated = formatRemoteTimestamp(row.updated_at);
 
         if (card.availableCredit !== null && card.limit > 0) {
             card.used = Math.max(card.limit - card.availableCredit, 0);
         }
     });
+}
+
+function mergeRemoteSettings(row) {
+    if (!row) return;
+
+    financeData.savings.current = Number(row.savings_current) || 0;
+    financeData.savings.goal = Number(row.savings_goal) || 0;
+
+    const loan = financeData.loans[0];
+    loan.originalAmount = Number(row.loan_original_amount) || 0;
+    loan.contractedTotal = Number(row.loan_contracted_total) || 0;
+    loan.outstanding = Number(row.loan_outstanding) || 0;
+    loan.monthlyInstallment = Number(row.loan_monthly_installment) || 0;
+    loan.profitRate = Number(row.loan_profit_rate) || 0;
+    loan.totalInstallments = Number(row.loan_total_installments) || 0;
+    loan.paidInstallments = Number(row.loan_paid_installments) || 0;
+    loan.nextPaymentDate = row.loan_next_payment_date || "";
+    loan.endDate = row.loan_end_date || "";
+    loan.updated = formatRemoteTimestamp(row.updated_at);
 }
 
 function startRealtime() {
@@ -374,6 +337,7 @@ function startRealtime() {
         .channel("finance-dashboard-live")
         .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => loadRemoteData())
         .on("postgres_changes", { event: "*", schema: "public", table: "accounts" }, () => loadRemoteData())
+        .on("postgres_changes", { event: "*", schema: "public", table: "finance_settings" }, () => loadRemoteData())
         .subscribe();
 
     if (!refreshTimer) {
@@ -453,7 +417,7 @@ function goToPage(pageName) {
 function createAccountCard(account) {
     const card = document.createElement("div");
     card.className = "account-card";
-    const updatedText = account.updated ? `Updated ${safeText(account.updated)}` : "Balance is manual until KFH provides it in an SMS";
+    const updatedText = account.updated ? `Synced ${safeText(account.updated)}` : "Synced through Supabase";
 
     card.innerHTML = `
         <div class="bank-header">
@@ -517,7 +481,7 @@ function createCreditCard(card) {
             <span class="money">Available: ${displayMoney(available)}</span>
         </div>
         <div class="credit-extra">
-            <span>Due: ${formatDate(card.dueDate)}</span>
+            <span>Due: ${card.dueDate ? formatDate(card.dueDate) : ordinalDay(card.dueDay)}</span>
             <button class="update-button" onclick="openCreditModal('${card.id}')">Settings →</button>
         </div>
         ${(statementText || minimumText) ? `<div class="credit-extra">${statementText}${minimumText}</div>` : ""}
@@ -804,18 +768,28 @@ function closeBalanceModal() {
     document.getElementById("balanceModal").classList.remove("show");
 }
 
-function saveBalance() {
-    if (!activeAccount) return;
+async function saveBalance() {
+    if (!activeAccount || !supabaseClient) return;
     const balance = parseFloat(document.getElementById("balanceInput").value);
     if (Number.isNaN(balance)) {
         alert("Please enter a valid balance.");
         return;
     }
-    activeAccount.balance = balance;
-    activeAccount.updated = getTodayFormatted();
-    saveData();
+
+    const { error } = await supabaseClient
+        .from("accounts")
+        .update({ balance, updated_at: new Date().toISOString() })
+        .eq("bank", "KFH")
+        .eq("account_type", "debit");
+
+    if (error) {
+        console.error(error);
+        alert(`Could not save the KFH balance: ${error.message}`);
+        return;
+    }
+
     closeBalanceModal();
-    render();
+    await loadRemoteData();
 }
 
 function openCreditModal(id) {
@@ -824,7 +798,7 @@ function openCreditModal(id) {
     document.getElementById("creditModalName").textContent = activeCreditCard.name;
     document.getElementById("creditUsedInput").value = activeCreditCard.used;
     document.getElementById("creditLimitInput").value = activeCreditCard.limit;
-    document.getElementById("creditDueDateInput").value = activeCreditCard.dueDate;
+    document.getElementById("creditDueDateInput").value = activeCreditCard.dueDay || 27;
     document.getElementById("creditModal").classList.add("show");
 }
 
@@ -832,28 +806,44 @@ function closeCreditModal() {
     document.getElementById("creditModal").classList.remove("show");
 }
 
-function saveCredit() {
-    if (!activeCreditCard) return;
+async function saveCredit() {
+    if (!activeCreditCard || !supabaseClient) return;
 
     const used = parseFloat(document.getElementById("creditUsedInput").value);
     const limit = parseFloat(document.getElementById("creditLimitInput").value);
+    const dueDay = parseInt(document.getElementById("creditDueDateInput").value, 10);
 
-    if (Number.isNaN(used) || Number.isNaN(limit)) {
-        alert("Please enter valid credit values.");
+    if (Number.isNaN(used) || Number.isNaN(limit) || used < 0 || limit < 0 || used > limit) {
+        alert("Enter valid credit values. Used amount cannot be greater than the limit.");
         return;
     }
 
-    activeCreditCard.used = used;
-    activeCreditCard.limit = limit;
-    activeCreditCard.dueDate = document.getElementById("creditDueDateInput").value;
-
-    if (activeCreditCard.availableCredit !== null && limit > 0) {
-        activeCreditCard.used = Math.max(limit - activeCreditCard.availableCredit, 0);
+    if (Number.isNaN(dueDay) || dueDay < 1 || dueDay > 31) {
+        alert("Payment due day must be between 1 and 31.");
+        return;
     }
 
-    saveData();
+    const availableCredit = Math.max(limit - used, 0);
+
+    const { error } = await supabaseClient
+        .from("accounts")
+        .update({
+            credit_limit: limit,
+            available_credit: availableCredit,
+            due_day: dueDay,
+            updated_at: new Date().toISOString()
+        })
+        .eq("bank", activeCreditCard.bank)
+        .eq("account_type", "credit");
+
+    if (error) {
+        console.error(error);
+        alert(`Could not save ${activeCreditCard.name}: ${error.message}`);
+        return;
+    }
+
     closeCreditModal();
-    render();
+    await loadRemoteData();
 }
 
 function openLoanModal(id) {
@@ -877,36 +867,48 @@ function closeLoanModal() {
     document.getElementById("loanModal").classList.remove("show");
 }
 
-function saveLoan() {
-    if (!activeLoan) return;
+async function saveLoan() {
+    if (!activeLoan || !supabaseClient) return;
 
     const originalAmount = parseFloat(document.getElementById("loanOriginalInput").value) || 0;
     const contractedTotal = parseFloat(document.getElementById("loanContractTotalInput").value) || 0;
     const outstanding = parseFloat(document.getElementById("loanOutstandingInput").value) || 0;
     const monthlyInstallment = parseFloat(document.getElementById("loanMonthlyInput").value) || 0;
     const profitRate = parseFloat(document.getElementById("loanProfitRateInput").value) || 0;
-    const totalInstallments = parseInt(document.getElementById("loanTotalInstallmentsInput").value) || 0;
-    const paidInstallments = parseInt(document.getElementById("loanPaidInstallmentsInput").value) || 0;
+    const totalInstallments = parseInt(document.getElementById("loanTotalInstallmentsInput").value, 10) || 0;
+    const paidInstallments = parseInt(document.getElementById("loanPaidInstallmentsInput").value, 10) || 0;
+    const nextPaymentDate = document.getElementById("loanNextPaymentInput").value || null;
+    const endDate = document.getElementById("loanEndDateInput").value || null;
 
     if (paidInstallments > totalInstallments && totalInstallments > 0) {
         alert("Paid installments cannot exceed total installments.");
         return;
     }
 
-    activeLoan.originalAmount = originalAmount;
-    activeLoan.contractedTotal = contractedTotal;
-    activeLoan.outstanding = outstanding;
-    activeLoan.monthlyInstallment = monthlyInstallment;
-    activeLoan.profitRate = profitRate;
-    activeLoan.totalInstallments = totalInstallments;
-    activeLoan.paidInstallments = paidInstallments;
-    activeLoan.nextPaymentDate = document.getElementById("loanNextPaymentInput").value;
-    activeLoan.endDate = document.getElementById("loanEndDateInput").value;
-    activeLoan.updated = getTodayFormatted();
+    const { error } = await supabaseClient
+        .from("finance_settings")
+        .update({
+            loan_original_amount: originalAmount,
+            loan_contracted_total: contractedTotal,
+            loan_outstanding: outstanding,
+            loan_monthly_installment: monthlyInstallment,
+            loan_profit_rate: profitRate,
+            loan_total_installments: totalInstallments,
+            loan_paid_installments: paidInstallments,
+            loan_next_payment_date: nextPaymentDate,
+            loan_end_date: endDate,
+            updated_at: new Date().toISOString()
+        })
+        .eq("user_id", (await supabaseClient.auth.getUser()).data.user.id);
 
-    saveData();
+    if (error) {
+        console.error(error);
+        alert(`Could not save financing details: ${error.message}`);
+        return;
+    }
+
     closeLoanModal();
-    render();
+    await loadRemoteData();
 }
 
 function openSavingsModal() {
@@ -919,20 +921,39 @@ function closeSavingsModal() {
     document.getElementById("savingsModal").classList.remove("show");
 }
 
-function saveSavings() {
+async function saveSavings() {
+    if (!supabaseClient) return;
     const savings = parseFloat(document.getElementById("savingsInput").value);
     const goal = parseFloat(document.getElementById("goalInput").value);
 
-    if (Number.isNaN(savings) || Number.isNaN(goal)) {
+    if (Number.isNaN(savings) || Number.isNaN(goal) || savings < 0 || goal < 0) {
         alert("Please enter valid savings values.");
         return;
     }
 
-    financeData.savings.current = savings;
-    financeData.savings.goal = goal;
-    saveData();
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !userData.user) {
+        alert("Your session expired. Please sign in again.");
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from("finance_settings")
+        .update({
+            savings_current: savings,
+            savings_goal: goal,
+            updated_at: new Date().toISOString()
+        })
+        .eq("user_id", userData.user.id);
+
+    if (error) {
+        console.error(error);
+        alert(`Could not save savings: ${error.message}`);
+        return;
+    }
+
     closeSavingsModal();
-    render();
+    await loadRemoteData();
 }
 
 /* =========================================================
