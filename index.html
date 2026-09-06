@@ -140,8 +140,16 @@
 
                 <div class="status">
                     <span class="status-dot"></span>
-                    Local Data
+                    <span id="connectionStatus">Connecting…</span>
                 </div>
+
+                <button
+                    id="logoutButton"
+                    class="logout-button"
+                    hidden
+                >
+                    Sign out
+                </button>
 
             </div>
 
@@ -278,6 +286,25 @@
                     id="dashboardCreditGrid"
                     class="credit-grid"
                 ></div>
+
+            </section>
+
+
+            <!-- RECENT TRANSACTIONS -->
+            <section class="section">
+
+                <div class="section-header">
+
+                    <div>
+                        <p class="section-label">LIVE ACTIVITY</p>
+                        <h2>Recent Transactions</h2>
+                    </div>
+
+                    <span id="transactionCount" class="section-meta">0 synced</span>
+
+                </div>
+
+                <div id="dashboardTransactions" class="transactions-list"></div>
 
             </section>
 
@@ -1313,6 +1340,26 @@
 
     </div>
 
+</div>
+
+
+<!-- SUPABASE LOGIN -->
+<div id="authOverlay" class="auth-overlay">
+    <div class="auth-card">
+        <div class="auth-logo">S</div>
+        <p class="section-label">SECURE ACCESS</p>
+        <h2>My Finance</h2>
+        <p class="auth-copy">Sign in with the Supabase user you created.</p>
+
+        <label>Email</label>
+        <input id="loginEmail" type="email" autocomplete="username" placeholder="you@example.com">
+
+        <label>Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
+
+        <button id="loginButton" class="primary-button full">Sign In</button>
+        <p id="loginError" class="auth-error"></p>
+    </div>
 </div>
 
 
