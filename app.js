@@ -159,7 +159,9 @@ async function initSupabase() {
         if (error) throw error;
 
         supabaseClient.auth.onAuthStateChange((_event, session) => {
-            handleSession(session);
+            // Do not call Supabase queries synchronously inside the auth callback.
+            // Defer the refresh so auth state changes cannot block data loading.
+            setTimeout(() => handleSession(session), 0);
         });
 
         await handleSession(data.session);
@@ -240,27 +242,23 @@ async function loadRemoteData() {
     try {
         setConnectionStatus("Syncing…", "loading");
 
-        const [accountsResult, transactionsResult, settingsResult] = await Promise.all([
+        const [stateResult, transactionsResult] = await Promise.all([
             supabaseClient
-                .from("accounts")
-                .select("bank,account_type,card_last4,balance,available_credit,credit_limit,statement_balance,minimum_payment,payment_due_date,due_day,updated_at"),
+                .from("finance_state")
+                .select("*")
+                .eq("id", 1)
+                .single(),
             supabaseClient
                 .from("transactions")
                 .select("bank,merchant,amount,direction,card_last4,balance_after,transaction_date,transaction_time,category,instrument_type,transaction_type,status,reference,currency,created_at")
                 .order("created_at", { ascending: false })
-                .limit(100),
-            supabaseClient
-                .from("finance_settings")
-                .select("user_id,savings_current,savings_goal,loan_original_amount,loan_contracted_total,loan_outstanding,loan_monthly_installment,loan_profit_rate,loan_total_installments,loan_paid_installments,loan_next_payment_date,loan_end_date,updated_at")
-                .maybeSingle()
+                .limit(100)
         ]);
 
-        if (accountsResult.error) throw accountsResult.error;
+        if (stateResult.error) throw stateResult.error;
         if (transactionsResult.error) throw transactionsResult.error;
-        if (settingsResult.error) throw settingsResult.error;
 
-        mergeRemoteAccounts(accountsResult.data || []);
-        mergeRemoteSettings(settingsResult.data || null);
+        mergeRemoteState(stateResult.data);
         remoteTransactions = transactionsResult.data || [];
         render();
         setConnectionStatus("Supabase Connected", "ok");
@@ -270,49 +268,38 @@ async function loadRemoteData() {
     }
 }
 
-function mergeRemoteAccounts(rows) {
-    const kfhRow = rows.find(row =>
-        String(row.bank).toUpperCase() === "KFH" && row.account_type === "debit"
-    );
+function mergeRemoteState(row) {
+    if (!row) return;
 
-    if (kfhRow && kfhRow.balance !== null && kfhRow.balance !== undefined) {
-        financeData.accounts[0].balance = Number(kfhRow.balance) || 0;
-        financeData.accounts[0].updated = formatRemoteTimestamp(kfhRow.updated_at) || financeData.accounts[0].updated;
+    const kfh = financeData.accounts[0];
+    kfh.balance = Number(row.kfh_balance) || 0;
+    kfh.updated = formatRemoteTimestamp(row.updated_at) || kfh.updated;
+
+    const nbb = financeData.creditCards.find(card => card.bank === "NBB");
+    if (nbb) {
+        nbb.limit = Number(row.nbb_credit_limit) || 0;
+        nbb.availableCredit = row.nbb_available_credit === null ? null : Number(row.nbb_available_credit);
+        nbb.used = nbb.availableCredit === null ? 0 : Math.max(nbb.limit - nbb.availableCredit, 0);
+        nbb.statementBalance = row.nbb_statement_balance === null ? null : Number(row.nbb_statement_balance);
+        nbb.minimumPayment = row.nbb_minimum_payment === null ? null : Number(row.nbb_minimum_payment);
+        nbb.dueDay = Number(row.nbb_due_day) || 27;
+        nbb.dueDate = row.nbb_payment_due_date || "";
+        nbb.cardLast4 = row.nbb_card_last4 || null;
+        nbb.updated = formatRemoteTimestamp(row.updated_at);
     }
 
-    financeData.creditCards.forEach(card => {
-        const row = rows.find(item =>
-            String(item.bank).toLowerCase() === card.bank.toLowerCase() &&
-            item.account_type === "credit"
-        );
-
-        if (!row) return;
-
-        card.cardLast4 = row.card_last4 || card.cardLast4;
-        card.availableCredit = row.available_credit === null || row.available_credit === undefined
-            ? null
-            : Number(row.available_credit);
-        card.limit = row.credit_limit === null || row.credit_limit === undefined
-            ? card.limit
-            : Number(row.credit_limit);
-        card.statementBalance = row.statement_balance === null || row.statement_balance === undefined
-            ? null
-            : Number(row.statement_balance);
-        card.minimumPayment = row.minimum_payment === null || row.minimum_payment === undefined
-            ? null
-            : Number(row.minimum_payment);
-        card.dueDate = row.payment_due_date || "";
-        card.dueDay = row.due_day === null || row.due_day === undefined ? card.dueDay : Number(row.due_day);
-        card.updated = formatRemoteTimestamp(row.updated_at);
-
-        if (card.availableCredit !== null && card.limit > 0) {
-            card.used = Math.max(card.limit - card.availableCredit, 0);
-        }
-    });
-}
-
-function mergeRemoteSettings(row) {
-    if (!row) return;
+    const ila = financeData.creditCards.find(card => card.bank === "ila");
+    if (ila) {
+        ila.limit = Number(row.ila_credit_limit) || 0;
+        ila.availableCredit = row.ila_available_credit === null ? null : Number(row.ila_available_credit);
+        ila.used = ila.availableCredit === null ? 0 : Math.max(ila.limit - ila.availableCredit, 0);
+        ila.statementBalance = row.ila_statement_balance === null ? null : Number(row.ila_statement_balance);
+        ila.minimumPayment = row.ila_minimum_payment === null ? null : Number(row.ila_minimum_payment);
+        ila.dueDay = Number(row.ila_due_day) || 27;
+        ila.dueDate = row.ila_payment_due_date || "";
+        ila.cardLast4 = row.ila_card_last4 || null;
+        ila.updated = formatRemoteTimestamp(row.updated_at);
+    }
 
     financeData.savings.current = Number(row.savings_current) || 0;
     financeData.savings.goal = Number(row.savings_goal) || 0;
@@ -334,14 +321,15 @@ function startRealtime() {
     if (!supabaseClient || realtimeChannel) return;
 
     realtimeChannel = supabaseClient
-        .channel("finance-dashboard-live")
+        .channel("finance-dashboard-live-v2")
         .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => loadRemoteData())
-        .on("postgres_changes", { event: "*", schema: "public", table: "accounts" }, () => loadRemoteData())
-        .on("postgres_changes", { event: "*", schema: "public", table: "finance_settings" }, () => loadRemoteData())
+        .on("postgres_changes", { event: "*", schema: "public", table: "finance_state" }, () => loadRemoteData())
         .subscribe();
 
+    // Reliable fallback. Realtime should be immediate; polling guarantees both devices
+    // converge even if a browser temporarily loses the websocket.
     if (!refreshTimer) {
-        refreshTimer = setInterval(loadRemoteData, 30000);
+        refreshTimer = setInterval(loadRemoteData, 5000);
     }
 }
 
@@ -776,19 +764,25 @@ async function saveBalance() {
         return;
     }
 
+    const previous = financeData.accounts[0].balance;
+    financeData.accounts[0].balance = balance;
+    financeData.accounts[0].updated = "Just now";
+    render();
+    closeBalanceModal();
+
     const { error } = await supabaseClient
-        .from("accounts")
-        .update({ balance, updated_at: new Date().toISOString() })
-        .eq("bank", "KFH")
-        .eq("account_type", "debit");
+        .from("finance_state")
+        .update({ kfh_balance: balance, updated_at: new Date().toISOString() })
+        .eq("id", 1);
 
     if (error) {
+        financeData.accounts[0].balance = previous;
+        render();
         console.error(error);
         alert(`Could not save the KFH balance: ${error.message}`);
         return;
     }
 
-    closeBalanceModal();
     await loadRemoteData();
 }
 
@@ -817,32 +811,40 @@ async function saveCredit() {
         alert("Enter valid credit values. Used amount cannot be greater than the limit.");
         return;
     }
-
     if (Number.isNaN(dueDay) || dueDay < 1 || dueDay > 31) {
         alert("Payment due day must be between 1 and 31.");
         return;
     }
 
     const availableCredit = Math.max(limit - used, 0);
+    const prefix = activeCreditCard.bank === "NBB" ? "nbb" : "ila";
+    const patch = {
+        [`${prefix}_credit_limit`]: limit,
+        [`${prefix}_available_credit`]: availableCredit,
+        [`${prefix}_due_day`]: dueDay,
+        updated_at: new Date().toISOString()
+    };
+
+    activeCreditCard.limit = limit;
+    activeCreditCard.availableCredit = availableCredit;
+    activeCreditCard.used = used;
+    activeCreditCard.dueDay = dueDay;
+    activeCreditCard.updated = "Just now";
+    render();
+    closeCreditModal();
 
     const { error } = await supabaseClient
-        .from("accounts")
-        .update({
-            credit_limit: limit,
-            available_credit: availableCredit,
-            due_day: dueDay,
-            updated_at: new Date().toISOString()
-        })
-        .eq("bank", activeCreditCard.bank)
-        .eq("account_type", "credit");
+        .from("finance_state")
+        .update(patch)
+        .eq("id", 1);
 
     if (error) {
         console.error(error);
         alert(`Could not save ${activeCreditCard.name}: ${error.message}`);
+        await loadRemoteData();
         return;
     }
 
-    closeCreditModal();
     await loadRemoteData();
 }
 
@@ -885,8 +887,16 @@ async function saveLoan() {
         return;
     }
 
+    Object.assign(activeLoan, {
+        originalAmount, contractedTotal, outstanding, monthlyInstallment, profitRate,
+        totalInstallments, paidInstallments, nextPaymentDate: nextPaymentDate || "",
+        endDate: endDate || "", updated: "Just now"
+    });
+    render();
+    closeLoanModal();
+
     const { error } = await supabaseClient
-        .from("finance_settings")
+        .from("finance_state")
         .update({
             loan_original_amount: originalAmount,
             loan_contracted_total: contractedTotal,
@@ -899,15 +909,15 @@ async function saveLoan() {
             loan_end_date: endDate,
             updated_at: new Date().toISOString()
         })
-        .eq("user_id", (await supabaseClient.auth.getUser()).data.user.id);
+        .eq("id", 1);
 
     if (error) {
         console.error(error);
         alert(`Could not save financing details: ${error.message}`);
+        await loadRemoteData();
         return;
     }
 
-    closeLoanModal();
     await loadRemoteData();
 }
 
@@ -931,28 +941,27 @@ async function saveSavings() {
         return;
     }
 
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !userData.user) {
-        alert("Your session expired. Please sign in again.");
-        return;
-    }
+    financeData.savings.current = savings;
+    financeData.savings.goal = goal;
+    render();
+    closeSavingsModal();
 
     const { error } = await supabaseClient
-        .from("finance_settings")
+        .from("finance_state")
         .update({
             savings_current: savings,
             savings_goal: goal,
             updated_at: new Date().toISOString()
         })
-        .eq("user_id", userData.user.id);
+        .eq("id", 1);
 
     if (error) {
         console.error(error);
         alert(`Could not save savings: ${error.message}`);
+        await loadRemoteData();
         return;
     }
 
-    closeSavingsModal();
     await loadRemoteData();
 }
 
@@ -990,6 +999,14 @@ window.addEventListener("click", event => {
         const modal = document.getElementById(id);
         if (event.target === modal) modal.classList.remove("show");
     });
+});
+
+window.addEventListener("focus", () => {
+    if (supabaseClient) loadRemoteData();
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && supabaseClient) loadRemoteData();
 });
 
 document.addEventListener("keydown", event => {

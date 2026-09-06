@@ -1085,13 +1085,6 @@ function parseKfh(
   return null;
 }
 
-async function sha256Hex(value: string): Promise<string> {
-  const bytes = new TextEncoder().encode(value.trim());
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
 
 /* ==========================
    MAIN PARSER
@@ -1258,60 +1251,28 @@ export default {
          * but are not normal spending transactions.
          */
 
-        if (
-          parsed.transactionType ===
-          "statement"
-        ) {
-          const {
-            error:
-              statementError,
-          } =
-            await ctx
-              .supabaseAdmin
-              .from("accounts")
-              .update({
-                statement_balance:
-                  parsed.statementBalance,
+        if (parsed.transactionType === "statement") {
+          const prefix = parsed.bank === "NBB" ? "nbb" : parsed.bank === "ila" ? "ila" : null;
 
-                minimum_payment:
-                  parsed.minimumPayment,
+          if (prefix) {
+            const stateUpdate: Record<string, unknown> = { updated_at: new Date().toISOString() };
+            stateUpdate[`${prefix}_statement_balance`] = parsed.statementBalance;
+            stateUpdate[`${prefix}_minimum_payment`] = parsed.minimumPayment;
+            stateUpdate[`${prefix}_payment_due_date`] = parsed.paymentDueDate;
+            if (parsed.cardLast4) stateUpdate[`${prefix}_card_last4`] = parsed.cardLast4;
 
-                payment_due_date:
-                  parsed.paymentDueDate,
+            const { error: statementError } = await ctx.supabaseAdmin
+              .from("finance_state")
+              .update(stateUpdate)
+              .eq("id", 1);
 
-                updated_at:
-                  new Date()
-                    .toISOString(),
-              })
-              .eq(
-                "bank",
-                parsed.bank
-              )
-              .eq(
-                "account_type",
-                "credit"
-              )
-              .eq(
-                "card_last4",
-                parsed.cardLast4
-              );
-
-
-          if (
-            statementError
-          ) {
-            console.error(
-              statementError
-            );
+            if (statementError) {
+              console.error(statementError);
+              return Response.json({ error: "Could not update statement", details: statementError.message }, { status: 500 });
+            }
           }
 
-
-          return Response.json({
-            success: true,
-            type:
-              "statement",
-            parsed,
-          });
+          return Response.json({ success: true, type: "statement", parsed });
         }
 
 
@@ -1319,8 +1280,6 @@ export default {
          * Save transaction. The SMS hash prevents an iPhone Shortcut retry
          * from recording the same transaction twice.
          */
-
-        const sourceHash = await sha256Hex(body.message);
 
         const {
           error:
@@ -1332,8 +1291,6 @@ export default {
               "transactions"
             )
             .insert({
-              source_hash:
-                sourceHash,
               bank:
                 parsed.bank,
 
@@ -1384,17 +1341,7 @@ export default {
             });
 
 
-        if (
-          transactionError
-        ) {
-          if (transactionError.code === "23505") {
-            return Response.json({
-              ignored: true,
-              reason: "Duplicate SMS",
-              bank: parsed.bank,
-            });
-          }
-
+        if (transactionError) {
           console.error(transactionError);
 
           return Response.json(
@@ -1421,7 +1368,7 @@ export default {
           const direction = parsed.transactionType === "transfer_in" ? "credit" : "debit";
 
           const { error: balanceError } = await ctx.supabaseAdmin.rpc(
-            "adjust_kfh_balance",
+            "adjust_finance_state_kfh_balance",
             {
               p_amount: parsed.amount,
               p_direction: direction,
@@ -1431,11 +1378,6 @@ export default {
           if (balanceError) {
             console.error(balanceError);
 
-            // Roll back the inserted transaction so a retry can safely try again.
-            await ctx.supabaseAdmin
-              .from("transactions")
-              .delete()
-              .eq("source_hash", sourceHash);
 
             return Response.json(
               {
@@ -1505,6 +1447,14 @@ export default {
               accountError
             );
           }
+
+          if (parsed.bank === "KFH") {
+            const { error: stateBalanceError } = await ctx.supabaseAdmin
+              .from("finance_state")
+              .update({ kfh_balance: parsed.balanceAfter, updated_at: new Date().toISOString() })
+              .eq("id", 1);
+            if (stateBalanceError) console.error(stateBalanceError);
+          }
         }
 
 
@@ -1566,6 +1516,20 @@ export default {
             console.error(
               creditError
             );
+          }
+
+          const prefix = parsed.bank === "NBB" ? "nbb" : parsed.bank === "ila" ? "ila" : null;
+          if (prefix) {
+            const stateUpdate: Record<string, unknown> = { updated_at: new Date().toISOString() };
+            if (parsed.availableCredit !== null) stateUpdate[`${prefix}_available_credit`] = parsed.availableCredit;
+            if (parsed.cardLast4) stateUpdate[`${prefix}_card_last4`] = parsed.cardLast4;
+
+            const { error: stateCreditError } = await ctx.supabaseAdmin
+              .from("finance_state")
+              .update(stateUpdate)
+              .eq("id", 1);
+
+            if (stateCreditError) console.error(stateCreditError);
           }
         }
 
